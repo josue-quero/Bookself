@@ -59,9 +59,11 @@ dependencies {
     implementation 'com.android.volley:volley:1.2.0'
     // Google Sign-in
     implementation 'com.google.android.gms:play-services-auth:19.0.0'
-    //OAuth Handler
+    // OAuth Handler
     implementation 'com.google.api-client:google-api-client:1.31.5'
     implementation 'com.google.http-client:google-http-client-gson:1.39.2'
     // Parse database
     implementation "com.github.parse-community.Parse-SDK-Android:parse:1.25.0"
+    // Horizontal recycler view
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
 }

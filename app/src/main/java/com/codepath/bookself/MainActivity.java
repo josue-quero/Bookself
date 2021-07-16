@@ -65,11 +65,10 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     final FragmentManager fragmentManager = getSupportFragmentManager();
-    private String tokenUrl = "https://oauth2.googleapis.com/token";
     public static final String TAG = "MainActivity";
-    private RequestQueue mRequestQueue;
     private ArrayList<Books> bookInfoArrayList;
     public String userId;
+    private RequestQueue mRequestQueue;
     GoogleSignInClient mGoogleSignInClient;
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
 
@@ -125,9 +124,8 @@ public class MainActivity extends AppCompatActivity {
         });
         bottomNavigationView.setSelectedItemId(R.id.navigation_discover);
 
-        getBooksInfo("Vonnegut");
+        //getBooksInfo("Vonnegut");
         getInfoFromSignedInUser();
-        getRecommended(ParseUser.getCurrentUser().getString("accessToken"));
     }
 
     @Override
@@ -150,139 +148,17 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void goLaunchActivity(){
+        Intent i = new Intent(this, LaunchActivity.class);
+        startActivity(i);
+        finish();
+    }
+
     private void getInfoFromSignedInUser() {
         GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
         if (acct != null) {
             userId = acct.getId();
         }
-    }
-
-
-    private void getRecommended(String accessToken) {
-        bookInfoArrayList = new ArrayList<>();
-
-        // below line is use to initialize
-        // the variable for our request queue.
-        mRequestQueue = Volley.newRequestQueue(MainActivity.this);
-
-        // below line is use to clear cache this
-        // will be use when our data is being updated.
-        mRequestQueue.getCache().clear();
-
-        // below is the url for getting data from API in json format.
-        String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves/8/volumes?key=" + BuildConfig.BOOKS_KEY;
-
-        // below line we are  creating a new request queue.
-        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-
-
-        // below line is use to make json object request inside that we
-        // are passing url, get method and getting json object. .
-        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                //progressBar.setVisibility(View.GONE);
-                // inside on response method we are extracting all our json data.
-                try {
-                    JSONArray itemsArray = response.getJSONArray("items");
-                    Log.i(TAG, "Bookshelf Response: " + itemsArray);
-                    for (int i = 0; i < itemsArray.length(); i++) {
-                        JSONObject itemsObj = itemsArray.getJSONObject(i);
-                        JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
-                        String title = volumeObj.optString("title");
-                        String subtitle = volumeObj.optString("subtitle");
-                        JSONArray authorsArray = volumeObj.getJSONArray("authors");
-                        String publisher = volumeObj.optString("publisher");
-                        String publishedDate = volumeObj.optString("publishedDate");
-                        String description = volumeObj.optString("description");
-                        int pageCount = volumeObj.optInt("pageCount");
-                        JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
-                        String thumbnail = imageLinks.optString("thumbnail");
-                        String previewLink = volumeObj.optString("previewLink");
-                        String infoLink = volumeObj.optString("infoLink");
-                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
-                        String buyLink = saleInfoObj.optString("buyLink");
-                        ArrayList<String> authorsArrayList = new ArrayList<>();
-                        if (authorsArray.length() != 0) {
-                            for (int j = 0; j < authorsArray.length(); j++) {
-                                authorsArrayList.add(authorsArray.optString(i));
-                            }
-                        }
-                        // after extracting all the data we are
-                        // saving this data in our modal class.
-                        Books bookInfo = new Books(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink);
-
-                        // below line is use to pass our modal
-                        // class in our array list.
-                        bookInfoArrayList.add(bookInfo);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    // displaying a toast message when we get any error from API
-                    Toast.makeText(MainActivity.this, "No Data Found" + e, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "No data found: " + e);
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                if (error.networkResponse.statusCode == 401) {
-                    refreshAccessToken();
-                } else {
-                    // irrecoverable errors. show error to user.
-                    Toast.makeText(MainActivity.this, "Error found is " + error, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Error found is: " + error);
-                }
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("Authorization", "Bearer " + accessToken);
-                return params;
-            }
-        };
-        // at last we are adding our json object
-        // request in our request queue.
-        queue.add(booksObjrequest);
-    }
-
-    private void refreshAccessToken() {
-        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-        JSONObject params = new JSONObject();
-        try {
-            params.put("client_id", "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com");
-            params.put("client_secret", "FlTA8PyCAx43q4XjK3X-wZbC");
-            params.put("refresh_token", ParseUser.getCurrentUser().getString("refreshToken"));
-            params.put("grant_type", "refresh_token");
-        } catch (JSONException ignored) {
-            // never thrown in this case
-        }
-
-        JsonObjectRequest refreshTokenRequest = new JsonObjectRequest(Request.Method.POST, tokenUrl, params, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    Log.i(TAG, "Success refresh token");
-                    String accessToken = response.getString("access_token");
-                    saveAccessToken(accessToken);
-                    getRecommended(accessToken);
-                } catch (JSONException e) {
-                    Toast.makeText(MainActivity.this, "Error using refreshed token " + e, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Error using refreshed token " + e);
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // show error to user. refresh failed.
-                Log.e("Error on token refresh", new String(error.networkResponse.data));
-                LaunchActivity temp = new LaunchActivity();
-                revokeAccess();
-                goLaunchActivity();
-            }
-        });
-        queue.add(refreshTokenRequest);
     }
 
     private void getBooksInfo(String query) {
@@ -362,16 +238,6 @@ public class MainActivity extends AppCompatActivity {
         queue.add(booksObjrequest);
     }
 
-    public void saveAccessToken(String refreshToken) {
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        if (currentUser != null) {
-            // Other attributes than "email" will remain unchanged!
-            currentUser.put("accessToken", refreshToken);
-            // Saves the object.
-            currentUser.saveInBackground();
-        }
-    }
-
     public void logOut() {
         mGoogleSignInClient.signOut()
                 .addOnCompleteListener(this, new OnCompleteListener<Void>() {
@@ -380,21 +246,5 @@ public class MainActivity extends AppCompatActivity {
                         ParseUser.logOut();
                     }
                 });
-    }
-
-    public void revokeAccess() {
-        mGoogleSignInClient.revokeAccess()
-                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        logOut();
-                    }
-                });
-    }
-
-    public void goLaunchActivity(){
-        Intent i = new Intent(this, LaunchActivity.class);
-        startActivity(i);
-        finish();
     }
 }

@@ -39,6 +39,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class LaunchActivity extends AppCompatActivity {
 
@@ -90,12 +91,12 @@ public class LaunchActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        ParseUser currentUser = ParseUser.getCurrentUser();
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if (account != null) {
+        if (account != null && currentUser != null) {
             Log.i(TAG, "No one signed in");
             goMainActivity();
         }
-        //silentSignIn()
     }
     /*
     private void silentSignIn() {
@@ -210,6 +211,7 @@ public class LaunchActivity extends AppCompatActivity {
                             if (e == null){
                                 //Get the access and refresh tokens
                                 try {
+                                    Toast.makeText(LaunchActivity.this, "Successful signup", Toast.LENGTH_SHORT).show();
                                     getTokens();
                                 } catch (IOException ioException) {
                                     ioException.printStackTrace();
@@ -222,8 +224,16 @@ public class LaunchActivity extends AppCompatActivity {
                     });
                     return;
                 }
-                goMainActivity();
-                Toast.makeText(LaunchActivity.this, "Success!", Toast.LENGTH_SHORT).show();
+                if (Objects.equals(ParseUser.getCurrentUser().getString("accessToken"), "") && Objects.equals(ParseUser.getCurrentUser().getString("refreshToken"), "")) {
+                    try {
+                        getTokens();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                } else {
+                    goMainActivity();
+                    Toast.makeText(LaunchActivity.this, "Success!", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

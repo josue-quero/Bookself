@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/itSearch"
+        android:icon="?android:attr/actionModeWebSearchDrawable"
+        android:orderInCategory="52"
+        android:title="Search"
+        app:showAsAction="always" />
+
     <item
         android:id="@+id/extOption"
         android:icon="@drawable/exit_icon"
-        android:title="Compose"
+        android:title="Logout"
         android:orderInCategory="53"
         app:showAsAction="always" />
 </menu>

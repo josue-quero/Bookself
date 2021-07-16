@@ -6,7 +6,7 @@
     tools:context=".ui.discover.DiscoverFragment">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvDiscoverYou"
+        android:id="@+id/rvSearchedBooks"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 

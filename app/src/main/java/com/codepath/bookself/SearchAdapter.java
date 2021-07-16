@@ -2,8 +2,6 @@ package com.codepath.bookself;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,33 +13,33 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
-
-import com.bumptech.glide.request.target.Target;
 import com.codepath.bookself.models.Books;
 
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
 
-public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.DiscoverAdaptersVh>{
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
+
+public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder>{
 
     private ArrayList<Books> booksList;
     private Context context;
 
-    public DiscoverAdapter(ArrayList<Books> booksList, Context context) {
+    public SearchAdapter(ArrayList<Books> booksList, Context context) {
         this.booksList = booksList;
         this.context = context;
     }
 
     @NonNull
     @Override
-    public DiscoverAdapter.DiscoverAdaptersVh onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new DiscoverAdaptersVh(LayoutInflater.from(context).inflate(R.layout.book_for_you_item, parent, false));
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.searched_item, parent, false);
+        return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull DiscoverAdapter.DiscoverAdaptersVh holder, int position) {
+    public void onBindViewHolder(@NonNull SearchAdapter.ViewHolder holder, int position) {
         Books book = booksList.get(position);
         holder.bind(book);
     }
@@ -54,18 +52,21 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
     public void updateAdapter(ArrayList<Books> mBooks) {
         this.booksList = mBooks;
         notifyDataSetChanged();
-
     }
 
-    public class DiscoverAdaptersVh extends RecyclerView.ViewHolder implements View.OnClickListener{
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         TextView tvBookTitle;
         ImageView ivBookImage;
+        TextView tvPublisher;
+        TextView tvDate;
 
-        public DiscoverAdaptersVh(@NonNull View itemView) {
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvBookTitle = itemView.findViewById(R.id.tvBookTitle);
             ivBookImage = itemView.findViewById(R.id.ivBookImage);
+            tvPublisher = itemView.findViewById(R.id.tvPublisher);
+            tvDate = itemView.findViewById(R.id.tvDate);
             itemView.setOnClickListener(this);
         }
 
@@ -87,11 +88,13 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
 
         public void bind(Books book) {
             tvBookTitle.setText(book.getTitle());
+            tvPublisher.setText(book.getPublisher());
+            tvDate.setText(book.getPublishedDate());
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
                 Log.i("Something", "Link: " + httpsLink);
-                Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
+                Glide.with(context).load(httpsLink).centerCrop().transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
             }
         }
     }

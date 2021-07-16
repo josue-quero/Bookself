@@ -15,7 +15,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -28,7 +27,6 @@ import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.BuildConfig;
 import com.codepath.bookself.DiscoverAdapter;
 import com.codepath.bookself.LaunchActivity;
-import com.codepath.bookself.MainActivity;
 import com.codepath.bookself.R;
 import com.codepath.bookself.models.Books;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -45,9 +43,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class DiscoverFragment extends Fragment {
 
@@ -57,7 +53,7 @@ public class DiscoverFragment extends Fragment {
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerView;
     GoogleSignInClient mGoogleSignInClient;
-    List<Books> discoverBooks;
+    ArrayList<Books> discoverBooks;
     DiscoverAdapter discoverAdapter;
 
     public DiscoverFragment() {
@@ -91,10 +87,10 @@ public class DiscoverFragment extends Fragment {
         LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.HORIZONTAL));
-        getRecommended(ParseUser.getCurrentUser().getString("accessToken"));
-
+        discoverBooks = new ArrayList<>();
         discoverAdapter = new DiscoverAdapter(discoverBooks, getContext());
         recyclerView.setAdapter(discoverAdapter);
+        getRecommended(ParseUser.getCurrentUser().getString("accessToken"));
     }
 
     private void getRecommended(String accessToken) {
@@ -109,7 +105,7 @@ public class DiscoverFragment extends Fragment {
         mRequestQueue.getCache().clear();
 
         // below is the url for getting data from API in json format.
-        String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves/8/volumes?key=" + BuildConfig.BOOKS_KEY;
+        String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves/8/volumes?maxResults=40&key=" + BuildConfig.BOOKS_KEY;
 
         // below line we are  creating a new request queue.
         RequestQueue queue = Volley.newRequestQueue(requireContext());
@@ -154,8 +150,9 @@ public class DiscoverFragment extends Fragment {
                         // below line is use to pass our modal
                         // class in our array list.
                         discoverBooks.add(bookInfo);
-                        discoverAdapter.notifyDataSetChanged();
+                        discoverAdapter.updateAdapter(discoverBooks);
                         Toast.makeText(getContext(), "Got books! ", Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, "URL: " + url);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

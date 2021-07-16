@@ -15,6 +15,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -66,9 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     final FragmentManager fragmentManager = getSupportFragmentManager();
     public static final String TAG = "MainActivity";
-    private ArrayList<Books> bookInfoArrayList;
     public String userId;
-    private RequestQueue mRequestQueue;
     GoogleSignInClient mGoogleSignInClient;
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
 
@@ -132,20 +131,26 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds to the action bar if it is present
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.extOption) {
+        switch (item.getItemId()) {
+            case R.id.extOption:
             // Compose icon has been selected
             //Navigate to compose activity
-            LaunchActivity temp = new LaunchActivity();
-            logOut();
-            goLaunchActivity();
-            return true;
+                LaunchActivity temp = new LaunchActivity();
+                logOut();
+                goLaunchActivity();
+                return true;
+            case R.id.itSearch:
+                super.onSearchRequested();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     public void goLaunchActivity(){
@@ -159,83 +164,6 @@ public class MainActivity extends AppCompatActivity {
         if (acct != null) {
             userId = acct.getId();
         }
-    }
-
-    private void getBooksInfo(String query) {
-        bookInfoArrayList = new ArrayList<>();
-
-        // below line is use to initialize
-        // the variable for our request queue.
-        mRequestQueue = Volley.newRequestQueue(MainActivity.this);
-
-        // below line is use to clear cache this
-        // will be use when our data is being updated.
-        mRequestQueue.getCache().clear();
-
-        // below is the url for getting data from API in json format.
-        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&key=" + BuildConfig.BOOKS_KEY;
-
-        // below line we are  creating a new request queue.
-        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-
-
-        // below line is use to make json object request inside that we
-        // are passing url, get method and getting json object. .
-        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                //progressBar.setVisibility(View.GONE);
-                // inside on response method we are extracting all our json data.
-                try {
-                    JSONArray itemsArray = response.getJSONArray("items");
-                    Log.i(TAG, "Response: " + itemsArray);
-                    for (int i = 0; i < itemsArray.length(); i++) {
-                        JSONObject itemsObj = itemsArray.getJSONObject(i);
-                        JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
-                        String title = volumeObj.optString("title");
-                        String subtitle = volumeObj.optString("subtitle");
-                        JSONArray authorsArray = volumeObj.getJSONArray("authors");
-                        String publisher = volumeObj.optString("publisher");
-                        String publishedDate = volumeObj.optString("publishedDate");
-                        String description = volumeObj.optString("description");
-                        int pageCount = volumeObj.optInt("pageCount");
-                        JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
-                        String thumbnail = imageLinks.optString("thumbnail");
-                        String previewLink = volumeObj.optString("previewLink");
-                        String infoLink = volumeObj.optString("infoLink");
-                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
-                        String buyLink = saleInfoObj.optString("buyLink");
-                        ArrayList<String> authorsArrayList = new ArrayList<>();
-                        if (authorsArray.length() != 0) {
-                            for (int j = 0; j < authorsArray.length(); j++) {
-                                authorsArrayList.add(authorsArray.optString(i));
-                            }
-                        }
-                        // after extracting all the data we are
-                        // saving this data in our modal class.
-                        Books bookInfo = new Books(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink);
-
-                        // below line is use to pass our modal
-                        // class in our array list.
-                        bookInfoArrayList.add(bookInfo);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    // displaying a toast message when we get any error from API
-                    Toast.makeText(MainActivity.this, "No Data Found" + e, Toast.LENGTH_SHORT).show();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // also displaying error message in toast.
-                Toast.makeText(MainActivity.this, "Error found is " + error, Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Error found is: " + error);
-            }
-        });
-        // at last we are adding our json object
-        // request in our request queue.
-        queue.add(booksObjrequest);
     }
 
     public void logOut() {

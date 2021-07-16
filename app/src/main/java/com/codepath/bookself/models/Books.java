@@ -1,7 +1,12 @@
 package com.codepath.bookself.models;
 
+import com.parse.ParseClassName;
+
+import org.parceler.Parcel;
+
 import java.util.ArrayList;
 
+@Parcel
 public class Books {
     // creating string, int and array list
     // variables for our book details
@@ -16,6 +21,10 @@ public class Books {
     private String previewLink;
     private String infoLink;
     private String buyLink;
+
+    public Books() {
+
+    }
 
     // creating getter and setter methods
     public String getTitle() {

@@ -17,4 +17,6 @@
     <!-- Change the following strings as required -->
     <string name="back4app_app_id">CmtSj5hJFFzIxFd3zZ8aRSfRmRnUro3Sg9CXlDzs</string>
     <string name="back4app_client_key">ZLXzLyAVndb0JcKXx7SEnCkTTsG4o0KFtGzBZqJr</string>
+    <string name="app_label">Bookself</string>
+    <string name="search_hint">Search for a book</string>
 </resources>

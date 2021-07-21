@@ -1,6 +1,7 @@
 package com.codepath.bookself;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -9,6 +10,8 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Adapter;
 import android.widget.Toast;
 
@@ -18,7 +21,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.codepath.bookself.models.Books;
+import com.codepath.bookself.models.BooksParse;
 import com.parse.ParseUser;
 
 import org.json.JSONArray;
@@ -31,7 +34,7 @@ import java.util.Map;
 
 public class SearchActivity extends AppCompatActivity {
 
-    private ArrayList<Books> bookList;
+    private ArrayList<BooksParse> bookList;
     private SearchAdapter adapter;
     private RequestQueue mRequestQueue;
     public static final String TAG = "SearchActivity";
@@ -42,6 +45,9 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        // Sets the Toolbar to act as the ActionBar for this Activity window.
+        setSupportActionBar(toolbar);
         recyclerView = findViewById(R.id.rvSearchedBooks);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
@@ -54,7 +60,9 @@ public class SearchActivity extends AppCompatActivity {
         Intent intent = getIntent();
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            doBookSearch(query);
+            String newQuery = query.replaceAll("\\s+", "%20");
+            Log.i(TAG, "Query: " + newQuery);
+            doBookSearch(newQuery);
         }
     }
 
@@ -70,7 +78,7 @@ public class SearchActivity extends AppCompatActivity {
         mRequestQueue.getCache().clear();
 
         // below is the url for getting data from API in json format.
-        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40&key=" + BuildConfig.BOOKS_KEY;
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40&orderBy=relevance&key=" + BuildConfig.BOOKS_KEY;
 
         // below line we are  creating a new request queue.
         RequestQueue queue = Volley.newRequestQueue(SearchActivity.this);
@@ -85,23 +93,34 @@ public class SearchActivity extends AppCompatActivity {
                 // inside on response method we are extracting all our json data.
                 try {
                     JSONArray itemsArray = response.getJSONArray("items");
-                    Log.i(TAG, "Response: " + itemsArray);
+                    Log.i(TAG, "Response: " + response);
                     for (int i = 0; i < itemsArray.length(); i++) {
+                        JSONArray authorsArray = new JSONArray();
+                        String thumbnail = "";
+                        String buyLink = "";
                         JSONObject itemsObj = itemsArray.getJSONObject(i);
                         JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
                         String title = volumeObj.optString("title");
                         String subtitle = volumeObj.optString("subtitle");
-                        JSONArray authorsArray = volumeObj.getJSONArray("authors");
+                        try {
+                            authorsArray = volumeObj.getJSONArray("authors");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No author", e);
+                        }
                         String publisher = volumeObj.optString("publisher");
                         String publishedDate = volumeObj.optString("publishedDate");
                         String description = volumeObj.optString("description");
                         int pageCount = volumeObj.optInt("pageCount");
                         JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
-                        String thumbnail = imageLinks.optString("thumbnail");
+                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
+                        if (imageLinks != null) {
+                            thumbnail = imageLinks.optString("thumbnail");
+                        }
+                        if (saleInfoObj != null) {
+                            buyLink = saleInfoObj.optString("buyLink");
+                        }
                         String previewLink = volumeObj.optString("previewLink");
                         String infoLink = volumeObj.optString("infoLink");
-                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
-                        String buyLink = saleInfoObj.optString("buyLink");
                         ArrayList<String> authorsArrayList = new ArrayList<>();
                         if (authorsArray.length() != 0) {
                             for (int j = 0; j < authorsArray.length(); j++) {
@@ -110,13 +129,14 @@ public class SearchActivity extends AppCompatActivity {
                         }
                         // after extracting all the data we are
                         // saving this data in our modal class.
-                        Books bookInfo = new Books(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink);
+                        BooksParse bookInfo = new BooksParse();
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink);
 
                         // below line is use to pass our modal
                         // class in our array list.
                         bookList.add(bookInfo);
-                        adapter.updateAdapter(bookList);
                     }
+                    adapter.updateAdapter(bookList);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     // displaying a toast message when we get any error from API
@@ -134,5 +154,28 @@ public class SearchActivity extends AppCompatActivity {
         // at last we are adding our json object
         // request in our request queue.
         queue.add(booksObjrequest);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds to the action bar if it is present
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.extOption:
+                // Compose icon has been selected
+                //Navigate to compose activity
+                return true;
+            case R.id.itSearch:
+                super.onSearchRequested();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

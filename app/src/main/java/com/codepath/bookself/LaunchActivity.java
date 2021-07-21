@@ -98,23 +98,6 @@ public class LaunchActivity extends AppCompatActivity {
             goMainActivity();
         }
     }
-    /*
-    private void silentSignIn() {
-        mGoogleSignInClient.silentSignIn()
-                .addOnSuccessListener(this, new OnSuccessListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                        Log.i(TAG, "Silent sign in success");
-                        goMainActivity();
-                    }
-                })
-                .addOnFailureListener(this, new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });
-    }*/
 
     private void goMainActivity(){
         Intent i = new Intent(this, MainActivity.class);
@@ -224,6 +207,7 @@ public class LaunchActivity extends AppCompatActivity {
                     });
                     return;
                 }
+
                 if (Objects.equals(ParseUser.getCurrentUser().getString("accessToken"), "") && Objects.equals(ParseUser.getCurrentUser().getString("refreshToken"), "")) {
                     try {
                         getTokens();

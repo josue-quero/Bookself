@@ -18,7 +18,7 @@ import com.bumptech.glide.Glide;
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
 import com.bumptech.glide.request.target.Target;
-import com.codepath.bookself.models.Books;
+import com.codepath.bookself.models.BooksParse;
 
 import org.parceler.Parcels;
 
@@ -26,10 +26,10 @@ import java.util.ArrayList;
 
 public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.DiscoverAdaptersVh>{
 
-    private ArrayList<Books> booksList;
+    private ArrayList<BooksParse> booksList;
     private Context context;
 
-    public DiscoverAdapter(ArrayList<Books> booksList, Context context) {
+    public DiscoverAdapter(ArrayList<BooksParse> booksList, Context context) {
         this.booksList = booksList;
         this.context = context;
     }
@@ -42,7 +42,7 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
 
     @Override
     public void onBindViewHolder(@NonNull DiscoverAdapter.DiscoverAdaptersVh holder, int position) {
-        Books book = booksList.get(position);
+        BooksParse book = booksList.get(position);
         holder.bind(book);
     }
 
@@ -51,7 +51,7 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
         return booksList.size();
     }
 
-    public void updateAdapter(ArrayList<Books> mBooks) {
+    public void updateAdapter(ArrayList<BooksParse> mBooks) {
         this.booksList = mBooks;
         notifyDataSetChanged();
 
@@ -75,17 +75,18 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
             // make sure the position is valid, i.e. actually exists in the view
             if (position != RecyclerView.NO_POSITION) {
                 // get the movie at the position, this won't work if the class is static
-                Books book = booksList.get(position);
+                BooksParse book = booksList.get(position);
                 // create intent for the new activity
                 Intent intent = new Intent(context, DetailsActivity.class);
                 // serialize the movie using parceler, use its short name as a key
-                intent.putExtra(Books.class.getSimpleName(), Parcels.wrap(book));
+                intent.putExtra("Progress", false);
+                intent.putExtra(BooksParse.class.getSimpleName(), Parcels.wrap(book));
                 // show the activity
                 context.startActivity(intent);
             }
         }
 
-        public void bind(Books book) {
+        public void bind(BooksParse book) {
             tvBookTitle.setText(book.getTitle());
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {

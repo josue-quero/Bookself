@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.codepath.bookself.models.BooksParse;
+import com.codepath.bookself.models.UsersBookProgress;
 
 import org.parceler.Parcels;
 
@@ -21,52 +22,48 @@ import java.util.ArrayList;
 
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
-public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder>{
+public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHolder>{
 
-    private ArrayList<BooksParse> booksList;
+    private ArrayList<UsersBookProgress> progressesList;
     private Context context;
 
-    public SearchAdapter(ArrayList<BooksParse> booksList, Context context) {
-        this.booksList = booksList;
+    public MyBooksAdapter(ArrayList<UsersBookProgress> booksList, Context context) {
+        this.progressesList = booksList;
         this.context = context;
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.searched_item, parent, false);
-        return new ViewHolder(view);
+    public MyBooksAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(context).inflate(R.layout.book_for_you_item, parent, false));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull SearchAdapter.ViewHolder holder, int position) {
-        BooksParse book = booksList.get(position);
-        holder.bind(book);
+    public void onBindViewHolder(@NonNull MyBooksAdapter.ViewHolder holder, int position) {
+        UsersBookProgress progress = progressesList.get(position);
+        holder.bind(progress);
     }
 
     @Override
     public int getItemCount() {
-        return booksList.size();
+        return progressesList.size();
     }
 
-    public void updateAdapter(ArrayList<BooksParse> mBooks) {
-        this.booksList = mBooks;
+    public void updateAdapter(ArrayList<UsersBookProgress> mProgress) {
+        this.progressesList = mProgress;
         notifyDataSetChanged();
+
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         TextView tvBookTitle;
         ImageView ivBookImage;
-        TextView tvPublisher;
-        TextView tvDate;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvBookTitle = itemView.findViewById(R.id.tvBookTitle);
             ivBookImage = itemView.findViewById(R.id.ivBookImage);
-            tvPublisher = itemView.findViewById(R.id.tvPublisher);
-            tvDate = itemView.findViewById(R.id.tvDate);
             itemView.setOnClickListener(this);
         }
 
@@ -76,25 +73,26 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             // make sure the position is valid, i.e. actually exists in the view
             if (position != RecyclerView.NO_POSITION) {
                 // get the movie at the position, this won't work if the class is static
-                BooksParse book = booksList.get(position);
+                UsersBookProgress progress = progressesList.get(position);
                 // create intent for the new activity
                 Intent intent = new Intent(context, DetailsActivity.class);
                 // serialize the movie using parceler, use its short name as a key
-                intent.putExtra("Progress", false);
-                intent.putExtra(BooksParse.class.getSimpleName(), Parcels.wrap(book));
+                intent.putExtra("Progress", true);
+                intent.putExtra(UsersBookProgress.class.getSimpleName(), Parcels.wrap(progress));
                 // show the activity
                 context.startActivity(intent);
             }
         }
 
-        public void bind(BooksParse book) {
+        public void bind(UsersBookProgress progress) {
+            BooksParse book = (BooksParse) progress.getParseObject("book");
+            assert book != null;
             tvBookTitle.setText(book.getTitle());
-            tvPublisher.setText(book.getPublisher());
-            tvDate.setText(book.getPublishedDate());
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
-                Glide.with(context).load(httpsLink).centerCrop().transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
+                Log.i("Something", "Link: " + httpsLink);
+                Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
             }
         }
     }

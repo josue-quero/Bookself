@@ -10,12 +10,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.codepath.bookself.models.Books;
+import com.codepath.bookself.models.BooksParse;
+import com.codepath.bookself.models.UsersBookProgress;
 
 import org.parceler.Parcels;
 
@@ -30,18 +32,37 @@ public class DetailsActivity extends AppCompatActivity {
     int pageCount;
     private ArrayList<String> authors;
 
-    TextView titleTV, subtitleTV, publisherTV, descTV, pageTV, publishDateTV;
+    TextView titleTV, subtitleTV, publisherTV, descTV, pageTV, publishDateTV, tvProgress;
     Button previewBtn, buyBtn;
     private ImageView bookIV;
-    private Books book;
+    private BooksParse book;
+    private UsersBookProgress bookProgress;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
-        // Getting books object
-        book = (Books) Parcels.unwrap(getIntent().getParcelableExtra(Books.class.getSimpleName()));
+        // Get the progress items from the view
+        progressBar = findViewById(R.id.progressBar);
+        tvProgress = findViewById(R.id.tvProgress);
+        // Checking if there is progress available
+        Intent intent = getIntent();
+        boolean withProgress = intent.getBooleanExtra("Progress", false);
+        // Getting book object
+        if (withProgress) {
+            bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
+            book = bookProgress.getBook();
+            int currentProgress = book.getPageCount()/bookProgress.getCurrentPage();
+            progressBar.setProgress(currentProgress);
+            tvProgress.setText("%" + String.valueOf(currentProgress));
+
+        } else{
+            book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
+            progressBar.setVisibility(View.GONE);
+            tvProgress.setVisibility(View.GONE);
+        }
 
         // initializing our views..
         titleTV = findViewById(R.id.idTVTitle);

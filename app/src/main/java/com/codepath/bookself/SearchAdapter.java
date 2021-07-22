@@ -2,7 +2,6 @@ package com.codepath.bookself;
 
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,7 +64,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             super(itemView);
             tvBookTitle = itemView.findViewById(R.id.tvBookTitle);
             ivBookImage = itemView.findViewById(R.id.ivBookImage);
-            tvPublisher = itemView.findViewById(R.id.tvPublisher);
+            tvPublisher = itemView.findViewById(R.id.tvAuthor);
             tvDate = itemView.findViewById(R.id.tvDate);
             itemView.setOnClickListener(this);
         }

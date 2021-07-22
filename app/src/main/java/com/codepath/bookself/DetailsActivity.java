@@ -54,9 +54,10 @@ public class DetailsActivity extends AppCompatActivity {
         if (withProgress) {
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
             book = bookProgress.getBook();
-            int currentProgress = book.getPageCount()/bookProgress.getCurrentPage();
-            progressBar.setProgress(currentProgress);
-            tvProgress.setText("%" + String.valueOf(currentProgress));
+            double currentProgress = ((double) bookProgress.getCurrentPage()/(double) book.getPageCount()) * 100;
+            long newCurrentProgress = Math.round(currentProgress);
+            progressBar.setProgress((int) newCurrentProgress);
+            tvProgress.setText(String.valueOf(newCurrentProgress) + "%");
 
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));

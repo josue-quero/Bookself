@@ -98,5 +98,6 @@ public class LibraryFragment extends Fragment {
         public int getItemCount() {
             return NUM_PAGES;
         }
+
     }
 }

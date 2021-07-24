@@ -60,11 +60,13 @@ public class ShelvesAdapter extends RecyclerView.Adapter<ShelvesAdapter.ViewHold
 
         TextView tvNameShelf;
         TextView tvAmountBooks;
+        ImageView ivIcon;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvNameShelf = itemView.findViewById(R.id.tvNameShelf);
             tvAmountBooks = itemView.findViewById(R.id.tvAmountBooks);
+            ivIcon = itemView.findViewById(R.id.ivIcon);
             itemView.setOnClickListener(this);
         }
 
@@ -75,18 +77,27 @@ public class ShelvesAdapter extends RecyclerView.Adapter<ShelvesAdapter.ViewHold
             if (position != RecyclerView.NO_POSITION) {
                 // get the movie at the position, this won't work if the class is static
                 Shelves shelf = shelvesList.get(position);
-                // create intent for the new activity
-                Intent intent = new Intent(context, ShelveDetailsActivity.class);
-                // serialize the movie using parceler, use its short name as a key
-                intent.putExtra(Shelves.class.getSimpleName(), Parcels.wrap(shelf));
-                // show the activity
-                context.startActivity(intent);
+                if (shelf != null) {
+                    // create intent for the new activity
+                    Intent intent = new Intent(context, ShelveDetailsActivity.class);
+                    // serialize the movie using parceler, use its short name as a key
+                    intent.putExtra(Shelves.class.getSimpleName(), Parcels.wrap(shelf));
+                    // show the activity
+                    context.startActivity(intent);
+                }
             }
         }
 
         public void bind(Shelves shelf) {
-            tvNameShelf.setText(shelf.getNameShelf());
-            tvAmountBooks.setText(String.valueOf(shelf.getAmountBooks()));
+            if (shelf != null) {
+                tvNameShelf.setText(shelf.getNameShelf());
+                tvAmountBooks.setText(String.valueOf(shelf.getAmountBooks()));
+                ivIcon.setVisibility(View.VISIBLE);
+            } else {
+                ivIcon.setVisibility(View.GONE);
+                tvNameShelf.setText("");
+                tvAmountBooks.setText("");
+            }
         }
     }
 }

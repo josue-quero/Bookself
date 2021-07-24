@@ -1,12 +1,17 @@
 package com.codepath.bookself.ui.library;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -25,9 +31,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.BuildConfig;
+import com.codepath.bookself.DetailsActivity;
 import com.codepath.bookself.LaunchActivity;
 import com.codepath.bookself.MyBooksAdapter;
 import com.codepath.bookself.R;
+import com.codepath.bookself.ShelveDetailsActivity;
 import com.codepath.bookself.ShelvesAdapter;
 import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.Shelves;
@@ -38,6 +46,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
@@ -46,6 +55,7 @@ import com.parse.ParseUser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,7 +70,9 @@ public class ShelvesFragment extends Fragment {
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerView;
+    private EditText etCompose;
     GoogleSignInClient mGoogleSignInClient;
+    ExtendedFloatingActionButton addShelfButton;
     ShelvesAdapter shelvesAdapter;
     ArrayList<Shelves> allShelves;
 
@@ -100,6 +112,57 @@ public class ShelvesFragment extends Fragment {
         shelvesAdapter = new ShelvesAdapter(allShelves, getContext());
         recyclerView.setAdapter(shelvesAdapter);
         getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"));
+
+        // Finding and adding on click listener for the add shelf button.
+        addShelfButton = view.findViewById(R.id.efabAddShelf);
+        addShelfButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Use the Builder class for convenient dialog construction
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                LayoutInflater inflater = requireActivity().getLayoutInflater();
+                View view = inflater.inflate(R.layout.new_shelf_dialog, null, false);
+                etCompose = view.findViewById(R.id.etShelfTitle);
+                builder.setView(view)
+                        .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int id) {
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+                alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String titleContent = etCompose.getText().toString();
+                        if (!titleContent.isEmpty()) {
+                            uploadShelf(titleContent);
+                            allShelves.clear();
+                            shelvesAdapter.updateAdapter(allShelves);
+                            alertDialog.dismiss();
+                            getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"));
+                            layoutManager.scrollToPosition(allShelves.size() - 1);
+                        } else {
+                            Toast.makeText(getContext(), "Sorry, your title cannot be empty", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    private void uploadShelf(String titleContent) {
+        Shelves newShelf = new Shelves();
+        newShelf.put("name", titleContent);
+        newShelf.put("amountBooks", 0);
+        newShelf.put("user", ParseUser.getCurrentUser());
+        newShelf.put("idShelf", -1);
+        newShelf.saveInBackground();
     }
 
     private void getParseShelves() {
@@ -128,6 +191,7 @@ public class ShelvesFragment extends Fragment {
                 }
 
                 // save received posts to list and notify adapter of new data
+                posts.add(null);
                 allShelves.addAll(posts);
                 shelvesAdapter.updateAdapter(allShelves);
             }

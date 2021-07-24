@@ -22,4 +22,11 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="lorem_ipsum">Doomy</string>
+    <string name="add_shelf">Add shelf</string>
+    <string name="fire">Test</string>
+    <string name="cancel">cancel</string>
+    <string name="dialog_fire_missiles">This_Message</string>
+    <string name="title_hint">Your shelf title</string>
+    <string name="create">Create</string>
+    <string name="new_shelf">Name your shelf</string>
 </resources>

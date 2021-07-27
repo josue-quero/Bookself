@@ -56,7 +56,7 @@ public class MyBooksFragment extends Fragment {
         recyclerView = view.findViewById(R.id.rvMyBooks);
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.HORIZONTAL));
+        //recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.HORIZONTAL));
         allProgresses = new ArrayList<>();
         // TODO: Create a new adapter for the library
         myBooksAdapter = new MyBooksAdapter(allProgresses, getContext());

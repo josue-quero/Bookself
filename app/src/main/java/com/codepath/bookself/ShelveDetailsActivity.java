@@ -19,6 +19,8 @@ import android.widget.Toolbar;
 import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
+import com.codepath.bookself.ui.library.ShelvesFragment;
+import com.parse.DeleteCallback;
 import com.parse.FindCallback;
 import com.parse.GetCallback;
 import com.parse.ParseException;
@@ -91,8 +93,17 @@ public class ShelveDetailsActivity extends AppCompatActivity {
     }
 
     private void deleteShelf() {
-        shelf.deleteInBackground();
-        finish();
+        shelf.deleteInBackground(new DeleteCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Log.e(TAG, "Error deleting: ", e);
+                    return;
+                }
+                setResult(RESULT_OK);
+                finish();
+            }
+        });
     }
 
     private void getParseShelf() {

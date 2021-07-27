@@ -10,12 +10,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
+import com.codepath.bookself.ui.library.ShelvesFragment;
 
 import org.parceler.Parcels;
 
@@ -27,10 +29,12 @@ public class ShelvesAdapter extends RecyclerView.Adapter<ShelvesAdapter.ViewHold
 
     private ArrayList<Shelves> shelvesList;
     private Context context;
+    private Fragment fragment;
 
-    public ShelvesAdapter(ArrayList<Shelves> shelvesList, Context context) {
+    public ShelvesAdapter(ArrayList<Shelves> shelvesList, Context context, Fragment fragment) {
         this.shelvesList = shelvesList;
         this.context = context;
+        this.fragment = fragment;
     }
 
     @NonNull
@@ -80,10 +84,11 @@ public class ShelvesAdapter extends RecyclerView.Adapter<ShelvesAdapter.ViewHold
                 if (shelf != null) {
                     // create intent for the new activity
                     Intent intent = new Intent(context, ShelveDetailsActivity.class);
+
                     // serialize the movie using parceler, use its short name as a key
                     intent.putExtra(Shelves.class.getSimpleName(), Parcels.wrap(shelf));
                     // show the activity
-                    context.startActivity(intent);
+                    fragment.startActivityForResult(intent, 1);
                 }
             }
         }

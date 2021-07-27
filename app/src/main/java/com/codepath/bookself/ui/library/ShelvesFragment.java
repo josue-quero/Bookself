@@ -2,16 +2,13 @@ package com.codepath.bookself.ui.library;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -31,13 +28,9 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.BuildConfig;
-import com.codepath.bookself.DetailsActivity;
 import com.codepath.bookself.LaunchActivity;
-import com.codepath.bookself.MyBooksAdapter;
 import com.codepath.bookself.R;
-import com.codepath.bookself.ShelveDetailsActivity;
 import com.codepath.bookself.ShelvesAdapter;
-import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -51,17 +44,18 @@ import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.parceler.Parcels;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static android.app.Activity.RESULT_OK;
 
 public class ShelvesFragment extends Fragment {
 
@@ -71,6 +65,7 @@ public class ShelvesFragment extends Fragment {
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerView;
     private EditText etCompose;
+    private LinearLayoutManager layoutManager;
     GoogleSignInClient mGoogleSignInClient;
     ExtendedFloatingActionButton addShelfButton;
     ShelvesAdapter shelvesAdapter;
@@ -104,17 +99,20 @@ public class ShelvesFragment extends Fragment {
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
         allShelves = new ArrayList<>();
         //allShelves.addAll(Arrays.asList("Favorites", "Purchased", "To Read", "Reading now", "Have Read", "Reviewed", "My eBooks"));
-        shelvesAdapter = new ShelvesAdapter(allShelves, getContext());
+        shelvesAdapter = new ShelvesAdapter(allShelves, getContext(), this);
         recyclerView.setAdapter(shelvesAdapter);
-        getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"));
-
+        if (getArguments() != null) {
+            refreshShelves();
+        } else {
+            getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), false);
+        }
         // Finding and adding on click listener for the add shelf button.
-        addShelfButton = view.findViewById(R.id.efabAddShelf);
+        addShelfButton = view.findViewById(R.id.efabAddShelf2);
         addShelfButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,11 +140,7 @@ public class ShelvesFragment extends Fragment {
                         String titleContent = etCompose.getText().toString();
                         if (!titleContent.isEmpty()) {
                             uploadShelf(titleContent);
-                            allShelves.clear();
-                            shelvesAdapter.updateAdapter(allShelves);
                             alertDialog.dismiss();
-                            getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"));
-                            layoutManager.scrollToPosition(allShelves.size() - 1);
                         } else {
                             Toast.makeText(getContext(), "Sorry, your title cannot be empty", Toast.LENGTH_LONG).show();
                         }
@@ -156,16 +150,36 @@ public class ShelvesFragment extends Fragment {
         });
     }
 
+    public void refreshShelves() {
+        allShelves.clear();
+        shelvesAdapter.updateAdapter(allShelves);
+        getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), true);
+    }
+
     private void uploadShelf(String titleContent) {
         Shelves newShelf = new Shelves();
         newShelf.put("name", titleContent);
         newShelf.put("amountBooks", 0);
         newShelf.put("user", ParseUser.getCurrentUser());
         newShelf.put("idShelf", -1);
-        newShelf.saveInBackground();
+        newShelf.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                refreshShelves();
+            }
+        });
     }
 
-    private void getParseShelves() {
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        Log.i(TAG, "GettingResult");
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            refreshShelves();
+        }
+    }
+
+    private void getParseShelves(boolean goingToTheBottom) {
         // specify what type of data we want to query - Shelf.class
         ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
         // include data referred by user key
@@ -194,11 +208,14 @@ public class ShelvesFragment extends Fragment {
                 posts.add(null);
                 allShelves.addAll(posts);
                 shelvesAdapter.updateAdapter(allShelves);
+                if (goingToTheBottom) {
+                    layoutManager.scrollToPosition(allShelves.size() - 1);
+                }
             }
         });
     }
 
-    private void getGoogleShelves(String accessToken) {
+    private void getGoogleShelves(String accessToken, boolean goingToTheBottom) {
         // below line is use to initialize
         // the variable for our request queue.
         mRequestQueue = Volley.newRequestQueue(requireContext());
@@ -240,7 +257,7 @@ public class ShelvesFragment extends Fragment {
                     // below line is use to pass our modal
                     // class in our array list.
                     shelvesAdapter.updateAdapter(allShelves);
-                    getParseShelves();
+                    getParseShelves(goingToTheBottom);
                     Log.i(TAG, "URL: " + url);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -252,7 +269,7 @@ public class ShelvesFragment extends Fragment {
             @Override
             public void onErrorResponse(VolleyError error) {
                 if (error.networkResponse.statusCode == 401) {
-                    refreshAccessToken();
+                    refreshAccessToken(goingToTheBottom);
                 } else {
                     // irrecoverable errors. show error to user.
                     Toast.makeText(getContext(), "Error found is " + error, Toast.LENGTH_SHORT).show();
@@ -272,7 +289,7 @@ public class ShelvesFragment extends Fragment {
         queue.add(booksObjrequest);
     }
 
-    private void refreshAccessToken() {
+    private void refreshAccessToken(boolean goingToTheBottom) {
         RequestQueue queue = Volley.newRequestQueue(requireContext());
         JSONObject params = new JSONObject();
         try {
@@ -291,7 +308,7 @@ public class ShelvesFragment extends Fragment {
                     Log.i(TAG, "Success refresh token");
                     String accessToken = response.getString("access_token");
                     saveAccessToken(accessToken);
-                    getGoogleShelves(accessToken);
+                    getGoogleShelves(accessToken, goingToTheBottom);
                 } catch (JSONException e) {
                     Toast.makeText(getContext(), "Error using refreshed token " + e, Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "Error using refreshed token " + e);

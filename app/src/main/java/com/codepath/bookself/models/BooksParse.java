@@ -27,6 +27,7 @@ public class BooksParse extends ParseObject {
     public static final String KEY_PREVIEW_LINK = "previewLink";
     public static final String KEY_INFO_LINK = "infoLink";
     public static final String KEY_BUY_LINK = "buyLink";
+    public static final String KEY_GOOGLE_ID = "googleId";
 
     public BooksParse() {
     }
@@ -119,9 +120,13 @@ public class BooksParse extends ParseObject {
         put(KEY_BUY_LINK, buyLink);
     }
 
+    public String getGoogleId() { return getString(KEY_GOOGLE_ID); }
+
+    public void setGoogleId(String googleId) { put(KEY_GOOGLE_ID, googleId); }
+
     public void setBook(String title, String subtitle, ArrayList<String> authors, String publisher,
                     String publishedDate, String description, int pageCount, String thumbnail,
-                    String previewLink, String infoLink, String buyLink) {
+                    String previewLink, String infoLink, String buyLink, String googleId) {
 
         put(KEY_TITLE, title);
         put(KEY_SUBTITLE, subtitle);
@@ -134,5 +139,6 @@ public class BooksParse extends ParseObject {
         put(KEY_PREVIEW_LINK, previewLink);
         put(KEY_INFO_LINK, infoLink);
         put(KEY_BUY_LINK, buyLink);
+        put(KEY_GOOGLE_ID, googleId);
     }
 }

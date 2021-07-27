@@ -12,22 +12,24 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <LinearLayout
+        <RelativeLayout
+            android:id="@+id/rvPicture"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content">
 
             <!--Image view for displaying our book image-->
             <FrameLayout
                 android:id="@+id/flBook"
-                android:layout_width="120dp"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginBottom="0dp"
                 android:padding="10dp">
 
                 <ImageView
                     android:id="@+id/idIVbook"
                     android:layout_width="match_parent"
-                    android:layout_height="120dp"
+                    android:layout_height="200dp"
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginEnd="10dp"
@@ -37,9 +39,11 @@
             </FrameLayout>
 
             <LinearLayout
+                android:id="@+id/lyTitles"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_below="@id/flBook"
+                android:layout_marginTop="0dp"
                 android:orientation="vertical">
 
                 <!--Text view for displaying book publisher-->
@@ -49,6 +53,7 @@
                     android:layout_height="wrap_content"
                     android:padding="4dp"
                     android:text="title"
+                    android:textAlignment="center"
                     android:textColor="@color/black"
                     android:textSize="24sp"
                     android:textStyle="bold" />
@@ -62,31 +67,54 @@
                     android:layout_height="wrap_content"
                     android:padding="4dp"
                     android:text="subtitle"
+                    android:textAlignment="center"
                     android:textColor="@color/black"
                     android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/idTVpublisher"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="Publisher"
-                    android:textColor="@color/black"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/idTVPublishDate"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:padding="4dp"
-                    android:text="Publish Date"
-                    android:textColor="@color/black"
-                    android:textSize="12sp" />
-
             </LinearLayout>
 
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <!--button for displaying book preview-->
+
+            <!--button for opening buying page of the book-->
+            <Button
+                android:id="@+id/idBtnPreview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_weight="1"
+                android:text="Preview"
+                android:textAllCaps="true"
+                tools:ignore="NestedWeights" />
+
+            <Button
+                android:id="@+id/idBtnBuy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:layout_weight="1"
+                android:text="Buy"
+                android:textAllCaps="true" />
+
+
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btnAddToLibrary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:text="Add to Library" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
@@ -106,8 +134,8 @@
 
             <ProgressBar
                 android:id="@+id/progressBar"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
                 android:indeterminateOnly="false"
                 android:progressDrawable="@drawable/book_progress"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -118,18 +146,7 @@
                 tools:progress="60" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-        
-        
-        <TextView
-            android:id="@+id/idTVNoOfPages"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="4dp"
-            android:padding="4dp"
-            android:text="Number of Pages"
-            android:textColor="@color/black"
-            android:textSize="15sp" />
+
 
         <TextView
             android:id="@+id/idTVDescription"
@@ -141,36 +158,66 @@
             android:textColor="@color/black"
             android:textSize="12sp" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/idTVpublisher"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:orientation="horizontal"
-            android:weightSum="2">
+            android:layout_margin="10dp"
+            android:padding="4dp"
+            android:text="Publisher"
+            android:textColor="@color/black"
+            android:textSize="12sp" />
 
-            <!--button for displaying book preview-->
-            <Button
-                android:id="@+id/idBtnPreview"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:background="@color/colorWhite"
-                android:theme="@style/ToolbarTheme"
-                android:layout_margin="4dp"
-                android:layout_weight="1"
-                android:text="Preview"
-                android:textAllCaps="false" />
+        <LinearLayout
+            android:id="@+id/llTitles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
 
-            <!--button for opening buying page of the book-->
-            <Button
-                android:id="@+id/idBtnBuy"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/idTVPublishDate"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/colorWhite"
-                android:layout_margin="4dp"
                 android:layout_weight="1"
-                android:text="Buy"
-                android:textAllCaps="false" />
+                android:text="Published Date"
+                android:textColor="@color/black"
+                android:textSize="12sp"
+                android:textAlignment="center"
+                />
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/black" />
+
+            <TextView
+                android:id="@+id/idTVNoOfPages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Number of pages"
+                android:textColor="@color/black"
+                android:textSize="12sp"
+                android:textAlignment="center" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="@color/black"/>
+
+            <TextView
+                android:id="@+id/tvAuthors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Authors"
+                android:textColor="@color/black"
+                android:textSize="12sp"
+                android:textAlignment="center" />
 
         </LinearLayout>
+
+
     </LinearLayout>
 </ScrollView>

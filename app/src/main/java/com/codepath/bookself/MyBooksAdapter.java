@@ -77,7 +77,7 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
                 // create intent for the new activity
                 Intent intent = new Intent(context, DetailsActivity.class);
                 // serialize the movie using parceler, use its short name as a key
-                intent.putExtra("Progress", true);
+                intent.putExtra("FromMyLibrary", true);
                 intent.putExtra(UsersBookProgress.class.getSimpleName(), Parcels.wrap(progress));
                 // show the activity
                 context.startActivity(intent);

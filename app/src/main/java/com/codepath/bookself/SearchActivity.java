@@ -99,6 +99,7 @@ public class SearchActivity extends AppCompatActivity {
                         String thumbnail = "";
                         String buyLink = "";
                         JSONObject itemsObj = itemsArray.getJSONObject(i);
+                        String googleId = itemsObj.optString("id");
                         JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
                         String title = volumeObj.optString("title");
                         String subtitle = volumeObj.optString("subtitle");
@@ -124,13 +125,13 @@ public class SearchActivity extends AppCompatActivity {
                         ArrayList<String> authorsArrayList = new ArrayList<>();
                         if (authorsArray.length() != 0) {
                             for (int j = 0; j < authorsArray.length(); j++) {
-                                authorsArrayList.add(authorsArray.optString(i));
+                                authorsArrayList.add(authorsArray.optString(j));
                             }
                         }
                         // after extracting all the data we are
                         // saving this data in our modal class.
                         BooksParse bookInfo = new BooksParse();
-                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink);
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
 
                         // below line is use to pass our modal
                         // class in our array list.

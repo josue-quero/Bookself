@@ -71,4 +71,11 @@ public class Shelves extends ParseObject{
         put(KEY_GOOGLE_ID, id);
         put(KEY_AMOUNT_BOOKS, amountBooks);
     }
+
+    public void setParseShelf(String name, int googleId, int amountBooks, ParseUser user) {
+        put(KEY_NAME, name);
+        put(KEY_GOOGLE_ID, googleId);
+        put(KEY_AMOUNT_BOOKS, amountBooks);
+        put(KEY_USER, user);
+    }
 }

@@ -36,12 +36,13 @@ public class AddToShelfActivity extends AppCompatActivity {
 
     private LinearLayoutManager layoutManager;
     private RecyclerView rvShelvesToAddTo;
-    private ExtendedFloatingActionButton efabAddShelf2;
+    private ExtendedFloatingActionButton efabAddShelf2, efabAddToLibrary;
     private EditText etCompose;
     private BooksParse book;
     private String titleContent;
     private UsersBookProgress bookProgress;
     public static final String TAG = "AddToShelfActivity";
+    boolean onlyAddToLibrary;
     ArrayList<Shelves> allShelves;
     AddToShelfAdapter shelvesAdapter;
 
@@ -54,13 +55,22 @@ public class AddToShelfActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         boolean hasProgress = intent.getBooleanExtra("HasProgress", false);
+        efabAddToLibrary = findViewById(R.id.efabAddToLibrary);
+        onlyAddToLibrary = false;
         // Getting book object
         if (hasProgress) {
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
             book = bookProgress.getBook();
-
+            efabAddToLibrary.setVisibility(View.GONE);
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
+            efabAddToLibrary.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    onlyAddToLibrary = true;
+                    getPageInput(v);
+                }
+            });
         }
         layoutManager = new LinearLayoutManager(this);
         rvShelvesToAddTo.setLayoutManager(layoutManager);
@@ -70,6 +80,7 @@ public class AddToShelfActivity extends AppCompatActivity {
         allShelves = new ArrayList<>();
         shelvesAdapter = new AddToShelfAdapter(allShelves, this, book, hasProgress, bookProgress);
         rvShelvesToAddTo.setAdapter(shelvesAdapter);
+
         // Finding and adding on click listener for the add shelf button.
         efabAddShelf2 = findViewById(R.id.efabAddShelf2);
         efabAddShelf2.setOnClickListener(new View.OnClickListener() {
@@ -112,6 +123,10 @@ public class AddToShelfActivity extends AppCompatActivity {
             }
         });
         getParseShelves();
+    }
+
+    private void addBookToLibrary() {
+
     }
 
     private void getParseShelves() {
@@ -224,7 +239,6 @@ public class AddToShelfActivity extends AppCompatActivity {
                     return;
                 }
                 // Creating progress for the book
-                // TODO: Get users current page if that page is higher than 0 add to Reading list
                 Log.i(TAG, "This book has been uploaded previously" + bookFound);
                 BooksParse retrievedBook = bookFound.get(0);
                 createAndSaveProgress(retrievedBook, pagesAmount);
@@ -260,7 +274,12 @@ public class AddToShelfActivity extends AppCompatActivity {
                 }
 
                 Log.i(TAG, "Done saving progress");
-                uploadShelfWithBook(newBookProgress, titleContent);
+                if (!onlyAddToLibrary) {
+                    uploadShelfWithBook(newBookProgress, titleContent);
+                } else {
+                    setResult(RESULT_OK);
+                    finish();
+                }
             }
         });
 

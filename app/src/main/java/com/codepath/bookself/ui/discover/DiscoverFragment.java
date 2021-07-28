@@ -26,9 +26,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.BuildConfig;
+import com.codepath.bookself.DetailsActivity;
 import com.codepath.bookself.DiscoverAdapter;
 import com.codepath.bookself.LaunchActivity;
 import com.codepath.bookself.R;
+import com.codepath.bookself.SearchActivity;
 import com.codepath.bookself.models.BooksParse;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -36,6 +38,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.parse.ParseUser;
 
 import org.json.JSONArray;
@@ -53,6 +57,7 @@ public class DiscoverFragment extends Fragment {
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerView;
+    private MaterialCardView cFiction, cDrama, cPoetry, cHumor, cArt;
     GoogleSignInClient mGoogleSignInClient;
     ArrayList<BooksParse> discoverBooks;
     DiscoverAdapter discoverAdapter;
@@ -85,15 +90,64 @@ public class DiscoverFragment extends Fragment {
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
-
         recyclerView = view.findViewById(R.id.rvDiscoverYou);
         LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.HORIZONTAL));
         discoverBooks = new ArrayList<>();
         discoverAdapter = new DiscoverAdapter(discoverBooks, getContext());
         recyclerView.setAdapter(discoverAdapter);
         getRecommended(ParseUser.getCurrentUser().getString("accessToken"));
+
+        cFiction = view.findViewById(R.id.cFiction);
+        cDrama = view.findViewById(R.id.cDrama);
+        cPoetry = view.findViewById(R.id.cPoetry);
+        cHumor = view.findViewById(R.id.cHumor);
+        cArt = view.findViewById(R.id.cArt);
+
+        cFiction.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getContext(), SearchActivity.class);
+                i.putExtra("Genre", "subject:Fiction");
+                startActivity(i);
+            }
+        });
+
+        cDrama.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getContext(), SearchActivity.class);
+                i.putExtra("Genre", "subject:Drama");
+                startActivity(i);
+            }
+        });
+
+        cPoetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getContext(), SearchActivity.class);
+                i.putExtra("Genre", "subject:Poetry");
+                startActivity(i);
+            }
+        });
+
+        cHumor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getContext(), SearchActivity.class);
+                i.putExtra("Genre", "subject:Humor");
+                startActivity(i);
+            }
+        });
+
+        cArt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getContext(), SearchActivity.class);
+                i.putExtra("Genre", "subject:Art");
+                startActivity(i);
+            }
+        });
     }
 
     private void getRecommended(String accessToken) {

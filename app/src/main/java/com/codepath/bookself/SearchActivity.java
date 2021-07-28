@@ -57,16 +57,22 @@ public class SearchActivity extends AppCompatActivity {
         adapter = new SearchAdapter(bookList, this);
         recyclerView.setAdapter(adapter);
         // Get the intent, verify the action and get the query
+        String newQuery;
+        String parameter;
         Intent intent = getIntent();
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            String newQuery = query.replaceAll("\\s+", "%20");
+            newQuery = query.replaceAll("\\s+", "%20");
+            parameter = "&orderBy=relevance";
             Log.i(TAG, "Query: " + newQuery);
-            doBookSearch(newQuery);
+        } else {
+            newQuery = intent.getStringExtra("Genre");
+            parameter = "&orderBy=newest";
         }
+        doBookSearch(newQuery, parameter);
     }
 
-    private void doBookSearch(String query) {
+    private void doBookSearch(String query, String parameter) {
         bookList = new ArrayList<>();
 
         // below line is use to initialize
@@ -78,7 +84,9 @@ public class SearchActivity extends AppCompatActivity {
         mRequestQueue.getCache().clear();
 
         // below is the url for getting data from API in json format.
-        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40&orderBy=relevance&key=" + BuildConfig.BOOKS_KEY;
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40" + parameter + "&key=" + BuildConfig.BOOKS_KEY;
+
+        Log.i(TAG, "This is the line: " + url);
 
         // below line we are  creating a new request queue.
         RequestQueue queue = Volley.newRequestQueue(SearchActivity.this);

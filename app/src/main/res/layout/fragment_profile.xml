@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#5DB075"
     android:orientation="vertical"
     android:weightSum="9"
-    android:background="@drawable/background_pages"
     tools:context=".ui.profile.ProfileFragment">
 
 
@@ -56,8 +56,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Pages Read"
-                    android:textAlignment="center"
-                    />
+                    android:textAlignment="center" />
+
                 <View
                     android:layout_width="1dp"
                     android:layout_height="match_parent"

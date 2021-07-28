@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 
 import com.codepath.bookself.MyBooksAdapter;
 import com.codepath.bookself.R;
+import com.codepath.bookself.ShelfBooksAdapter;
 import com.codepath.bookself.models.UsersBookProgress;
 import com.parse.FindCallback;
 import com.parse.ParseException;
@@ -29,7 +30,7 @@ public class MyBooksFragment extends Fragment {
 
     private static final String TAG = "MyBooksFragment";
     private RecyclerView recyclerView;
-    MyBooksAdapter myBooksAdapter;
+    ShelfBooksAdapter shelfBooksAdapter;
     ArrayList<UsersBookProgress> allProgresses;
 
     public MyBooksFragment() {
@@ -59,8 +60,8 @@ public class MyBooksFragment extends Fragment {
         //recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.HORIZONTAL));
         allProgresses = new ArrayList<>();
         // TODO: Create a new adapter for the library
-        myBooksAdapter = new MyBooksAdapter(allProgresses, getContext());
-        recyclerView.setAdapter(myBooksAdapter);
+        shelfBooksAdapter = new ShelfBooksAdapter(allProgresses, getContext());
+        recyclerView.setAdapter(shelfBooksAdapter);
         getUserBooks();
     }
 
@@ -90,7 +91,7 @@ public class MyBooksFragment extends Fragment {
                 // save received posts to list and notify adapter of new data
                 Log.i(TAG, "Comparing usersBookProgress" + posts);
                 allProgresses.addAll(posts);
-                myBooksAdapter.updateAdapter(allProgresses);
+                shelfBooksAdapter.updateAdapter(allProgresses);
             }
         });
     }

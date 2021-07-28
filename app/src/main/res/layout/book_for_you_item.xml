@@ -1,40 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="180dp"
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="190dp"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="8dp">
+    android:padding="10dp">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="10dp">
+    <ImageView
+        android:id="@+id/ivBookImage"
+        android:layout_width="300dp"
+        android:layout_height="200dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter" />
 
-        <ImageView
-            android:id="@+id/ivBookImage"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="10dp"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter" />
+    <TextView
+        android:id="@+id/tvBookTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ivBookImage"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="0dp"
+        android:padding="3dp"
+        android:text="Book Title"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/tvBookTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/ivBookImage"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="0dp"
-            android:padding="3dp"
-            android:text="Book Title"
-            android:textAlignment="center"
-            android:textColor="@color/black"
-            android:textSize="11sp" />
-
-    </RelativeLayout>
-
-</androidx.cardview.widget.CardView>
+</RelativeLayout>

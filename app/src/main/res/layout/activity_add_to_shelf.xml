@@ -7,10 +7,25 @@
     tools:context=".AddToShelfActivity"
     android:orientation="vertical">
 
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/efabAddToLibrary"
+        style="@style/Widget.App.ExtendedFloatingActionButton"
+        android:layout_width="200dp"
+        android:layout_height="40dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:text="Just to My Library"
+        android:textAlignment="center">
+
+    </com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvShelvesToAddTo"
         android:layout_width="409dp"
         android:layout_height="729dp"
+        android:layout_below="@+id/efabAddToLibrary"
         tools:layout_editor_absoluteX="1dp"
         tools:layout_editor_absoluteY="1dp" />
 
@@ -26,4 +41,5 @@
         style="@style/Widget.App.ExtendedFloatingActionButton">
 
     </com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>
+
 </RelativeLayout>

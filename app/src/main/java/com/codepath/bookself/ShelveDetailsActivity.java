@@ -41,7 +41,7 @@ public class ShelveDetailsActivity extends AppCompatActivity {
     private Shelves shelf;
     public static final String TAG = "ShelveDetailsActivity";
     private RecyclerView recyclerView;
-    MyBooksAdapter myBooksAdapter;
+    ShelfBooksAdapter shelfBooksAdapter;
     ArrayList<UsersBookProgress> allProgresses;
 
     @Override
@@ -58,10 +58,9 @@ public class ShelveDetailsActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.rvShelfBooks);
         GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.HORIZONTAL));
         allProgresses = new ArrayList<>();
-        myBooksAdapter = new MyBooksAdapter(allProgresses, this);
-        recyclerView.setAdapter(myBooksAdapter);
+        shelfBooksAdapter = new ShelfBooksAdapter(allProgresses, this);
+        recyclerView.setAdapter(shelfBooksAdapter);
         // Getting Shelve object
         int googleId = shelf.getGoogleId();
         if (googleId == -1) {
@@ -122,7 +121,7 @@ public class ShelveDetailsActivity extends AppCompatActivity {
                     return;
                 }
                 allProgresses.addAll(objects);
-                myBooksAdapter.updateAdapter(allProgresses);
+                shelfBooksAdapter.updateAdapter(allProgresses);
             }
         });
     }

@@ -2,16 +2,25 @@ package com.codepath.bookself;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.codepath.bookself.models.BooksParse;
 
 import org.parceler.Parcels;
@@ -24,6 +33,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
 
     private ArrayList<BooksParse> booksList;
     private Context context;
+    private int lastPosition = -1;
 
     public SearchAdapter(ArrayList<BooksParse> booksList, Context context) {
         this.booksList = booksList;
@@ -40,7 +50,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull SearchAdapter.ViewHolder holder, int position) {
         BooksParse book = booksList.get(position);
-        holder.bind(book);
+        holder.bind(book, position);
     }
 
     @Override
@@ -86,14 +96,32 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             }
         }
 
-        public void bind(BooksParse book) {
+        public void bind(BooksParse book, int position) {
             tvBookTitle.setText(book.getTitle());
             tvPublisher.setText(book.getPublisher());
             tvDate.setText(book.getPublishedDate());
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
-                Glide.with(context).load(httpsLink).centerCrop().transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
+                ivBookImage.clearAnimation();
+                Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        Log.i("Something", "Last animated: " + lastPosition + "Position: " + position);
+                        if (position > lastPosition) {
+                            Log.i("Something", "Animated " + position);
+                            Animation fallInAnimation = AnimationUtils.loadAnimation(context, R.anim.fall_down_animation);
+                            ivBookImage.setAnimation(fallInAnimation);
+                            lastPosition = position;
+                        }
+                        return false;
+                    }
+                }).into(ivBookImage);
             }
         }
     }

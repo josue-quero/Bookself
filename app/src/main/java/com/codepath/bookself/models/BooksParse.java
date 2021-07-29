@@ -80,9 +80,7 @@ public class BooksParse extends ParseObject {
         put(KEY_DESCRIPTION, description);
     }
 
-    public int getPageCount() {
-        return getInt(KEY_PAGE_COUNT);
-    }
+    public int getPageCount() { return getInt(KEY_PAGE_COUNT); }
 
     public void setPageCount(int pageCount) {
         put(KEY_PAGE_COUNT, pageCount);

@@ -38,11 +38,20 @@
                     android:scaleType="fitCenter" />
             </FrameLayout>
 
+            <ImageView
+                android:id="@+id/ivHeart"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_below="@+id/flBook"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="0dp"
+                app:srcCompat="@drawable/heart" />
+
             <LinearLayout
                 android:id="@+id/lyTitles"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/flBook"
+                android:layout_below="@+id/ivHeart"
                 android:layout_marginTop="0dp"
                 android:orientation="vertical">
 

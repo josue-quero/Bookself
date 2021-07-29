@@ -8,6 +8,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,6 +29,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.BuildConfig;
+import com.codepath.bookself.DividerItemDecorator;
 import com.codepath.bookself.LaunchActivity;
 import com.codepath.bookself.R;
 import com.codepath.bookself.ShelvesAdapter;
@@ -54,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -66,6 +69,7 @@ public class ShelvesFragment extends Fragment {
     private RecyclerView recyclerView;
     private EditText etCompose;
     private LinearLayoutManager layoutManager;
+    private boolean justCreated = false;
     GoogleSignInClient mGoogleSignInClient;
     ExtendedFloatingActionButton addShelfButton;
     ShelvesAdapter shelvesAdapter;
@@ -89,10 +93,21 @@ public class ShelvesFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (!justCreated) {
+            Log.i(TAG, "Shelves updated");
+            refreshShelves(false);
+        }
+        justCreated = false;
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = view.findViewById(R.id.rvListShelves);
 
+        justCreated = true;
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
                 .requestServerAuthCode(clientId, true)
@@ -101,13 +116,13 @@ public class ShelvesFragment extends Fragment {
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
+        RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecorator(ContextCompat.getDrawable(requireContext(), R.drawable.divider));
+        recyclerView.addItemDecoration(dividerItemDecoration);
         allShelves = new ArrayList<>();
-        //allShelves.addAll(Arrays.asList("Favorites", "Purchased", "To Read", "Reading now", "Have Read", "Reviewed", "My eBooks"));
         shelvesAdapter = new ShelvesAdapter(allShelves, getContext(), this);
         recyclerView.setAdapter(shelvesAdapter);
         if (getArguments() != null) {
-            refreshShelves();
+            refreshShelves(true);
         } else {
             getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), false);
         }
@@ -150,10 +165,10 @@ public class ShelvesFragment extends Fragment {
         });
     }
 
-    public void refreshShelves() {
+    public void refreshShelves(boolean gointBottom) {
         allShelves.clear();
         shelvesAdapter.updateAdapter(allShelves);
-        getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), true);
+        getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), gointBottom);
     }
 
     private void uploadShelf(String titleContent) {
@@ -165,7 +180,7 @@ public class ShelvesFragment extends Fragment {
         newShelf.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
-                refreshShelves();
+                refreshShelves(true);
             }
         });
     }
@@ -175,7 +190,7 @@ public class ShelvesFragment extends Fragment {
         Log.i(TAG, "GettingResult");
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            refreshShelves();
+            refreshShelves(true);
         }
     }
 
@@ -225,7 +240,7 @@ public class ShelvesFragment extends Fragment {
         mRequestQueue.getCache().clear();
 
         // below is the url for getting data from API in json format.
-        String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves?key=" + BuildConfig.BOOKS_KEY;
+        String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves/7?key=" + BuildConfig.BOOKS_KEY;
 
         // below line we are  creating a new request queue.
         RequestQueue queue = Volley.newRequestQueue(requireContext());
@@ -238,32 +253,17 @@ public class ShelvesFragment extends Fragment {
             public void onResponse(JSONObject response) {
                 //progressBar.setVisibility(View.GONE);
                 // inside on response method we are extracting all our json data.
-                try {
-                    JSONArray itemsArray = response.getJSONArray("items");
-                    Log.i(TAG, "Bookshelf Response: " + itemsArray);
-                    for (int i = 0; i < itemsArray.length(); i++) {
-                        JSONObject itemsObj = itemsArray.getJSONObject(i);
-                        String title = itemsObj.optString("title");
-                        int volumeCounter = itemsObj.optInt("volumeCount");
-                        int id = itemsObj.optInt("id");
-                        if (id != 6 && id != 9 && id != 8) {
-                            // after extracting all the data we are
-                            // saving this data in our modal class.
-                            Shelves shelve = new Shelves();
-                            shelve.setGoogleShelf(title, id, volumeCounter);
-                            allShelves.add(shelve);
-                        }
-                    }
-                    // below line is use to pass our modal
-                    // class in our array list.
-                    shelvesAdapter.updateAdapter(allShelves);
-                    getParseShelves(goingToTheBottom);
-                    Log.i(TAG, "URL: " + url);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    // displaying a toast message when we get any error from API
-                    Log.e(TAG, "No data found: " + e);
-                }
+                Log.i(TAG, "Bookshelf Response: " + response);
+                String title = response.optString("title");
+                int volumeCounter = response.optInt("volumeCount");
+                int id = response.optInt("id");
+                Shelves shelve = new Shelves();
+                shelve.setGoogleShelf(title, id, volumeCounter);
+                allShelves.add(shelve);
+                // below line is use to pass our modal
+                // class in our array list.
+                getParseShelves(goingToTheBottom);
+                Log.i(TAG, "URL: " + url);
             }
         }, new Response.ErrorListener() {
             @Override

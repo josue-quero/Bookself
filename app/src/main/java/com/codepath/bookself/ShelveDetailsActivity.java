@@ -112,6 +112,7 @@ public class ShelveDetailsActivity extends AppCompatActivity {
         ParseQuery<UsersBookProgress> query = relation.getQuery();
         query.include(UsersBookProgress.KEY_BOOK);
         query.include(UsersBookProgress.KEY_USER);
+        query.addDescendingOrder("updatedAt");
 
         query.findInBackground(new FindCallback<UsersBookProgress>() {
             @Override

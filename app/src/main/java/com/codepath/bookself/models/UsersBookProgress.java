@@ -6,6 +6,8 @@ import com.parse.ParseUser;
 
 import org.parceler.Parcel;
 
+import java.util.Date;
+
 @Parcel(analyze = UsersBookProgress.class)
 @ParseClassName("UsersBookProgress")
 public class UsersBookProgress extends ParseObject {
@@ -13,6 +15,9 @@ public class UsersBookProgress extends ParseObject {
     public static final String KEY_CURRENT_PAGE = "currentPage";
     public static final String KEY_USER = "user";
     public static final String KEY_BOOK = "book";
+    public static final String KEY_HEARTED = "hearted";
+    public static final String KEY_LAST_READ = "lastRead";
+    public static final String KEY_READ = "read";
 
     public UsersBookProgress() {
     }
@@ -42,10 +47,23 @@ public class UsersBookProgress extends ParseObject {
         put(KEY_BOOK, book);
     }
 
-    public void setProgress(int currentPage, ParseUser user, ParseObject book) {
+    public boolean getHearted() { return getBoolean(KEY_HEARTED); }
+
+    public void setHearted(boolean hearted) { put(KEY_HEARTED, hearted); }
+
+    public Date getLastRead() { return getDate(KEY_LAST_READ); }
+
+    public void setLastRead(Date lastRead) {put(KEY_LAST_READ, lastRead); }
+
+    public void setRead(boolean read) {put(KEY_READ, read); }
+
+    public boolean getRead() { return getBoolean(KEY_READ); }
+
+    public void setProgress(int currentPage, ParseUser user, ParseObject book, boolean hearted) {
 
         put(KEY_CURRENT_PAGE, currentPage);
         put(KEY_USER, user);
         put(KEY_BOOK, book);
+        put(KEY_HEARTED, hearted);
     }
 }

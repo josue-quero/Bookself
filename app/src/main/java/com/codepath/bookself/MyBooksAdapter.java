@@ -2,17 +2,27 @@ package com.codepath.bookself;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.UsersBookProgress;
 
@@ -64,6 +74,7 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
             super(itemView);
             tvBookTitle = itemView.findViewById(R.id.tvBookTitle);
             ivBookImage = itemView.findViewById(R.id.ivBookImage);
+            ivBookImage.setVisibility(View.VISIBLE);
             itemView.setOnClickListener(this);
         }
 
@@ -91,8 +102,9 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
-                Log.i("Something", "Link: " + httpsLink);
+                //Log.i("Something", "Link: " + httpsLink);
                 Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
+                //Log.i("Something", "Animation: on");
             }
         }
     }

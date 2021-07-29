@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -28,6 +29,7 @@ import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.BuildConfig;
 import com.codepath.bookself.DetailsActivity;
 import com.codepath.bookself.DiscoverAdapter;
+import com.codepath.bookself.DiscoverOtherBooksAdapter;
 import com.codepath.bookself.LaunchActivity;
 import com.codepath.bookself.R;
 import com.codepath.bookself.SearchActivity;
@@ -49,6 +51,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class DiscoverFragment extends Fragment {
 
@@ -56,11 +59,12 @@ public class DiscoverFragment extends Fragment {
     private String tokenUrl = "https://oauth2.googleapis.com/token";
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     private RequestQueue mRequestQueue;
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerViewRecommended, recyclerViewPenguin, recyclerViewHachette, recyclerViewJava;
     private MaterialCardView cFiction, cDrama, cPoetry, cHumor, cArt;
     GoogleSignInClient mGoogleSignInClient;
-    ArrayList<BooksParse> discoverBooks;
+    ArrayList<BooksParse> recommendedBooks, penguinBooks, hachetteBooks, javaBooks;
     DiscoverAdapter discoverAdapter;
+    DiscoverOtherBooksAdapter penguinAdapter, hachetteAdapter, javaAdapter;
 
     public DiscoverFragment() {
         // Required empty public constructor
@@ -90,13 +94,39 @@ public class DiscoverFragment extends Fragment {
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
-        recyclerView = view.findViewById(R.id.rvDiscoverYou);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
-        recyclerView.setLayoutManager(layoutManager);
-        discoverBooks = new ArrayList<>();
-        discoverAdapter = new DiscoverAdapter(discoverBooks, getContext());
-        recyclerView.setAdapter(discoverAdapter);
+
+        recyclerViewRecommended = view.findViewById(R.id.rvDiscoverYou);
+        recyclerViewPenguin = view.findViewById(R.id.rvDiscoverPenguin);
+        recyclerViewHachette = view.findViewById(R.id.rvDiscoverHachette);
+        recyclerViewJava = view.findViewById(R.id.rvDiscoverJava);
+        LinearLayoutManager layoutManagerRecommended = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+        LinearLayoutManager layoutManagerPenguin = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+        LinearLayoutManager layoutManagerHachette = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+        LinearLayoutManager layoutManagerJava = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+        recyclerViewRecommended.setLayoutManager(layoutManagerRecommended);
+        recyclerViewPenguin.setLayoutManager(layoutManagerPenguin);
+        recyclerViewHachette.setLayoutManager(layoutManagerHachette);
+        recyclerViewJava.setLayoutManager(layoutManagerJava);
+
+        recommendedBooks = new ArrayList<>();
+        penguinBooks = new ArrayList<>();
+        hachetteBooks = new ArrayList<>();
+        javaBooks = new ArrayList<>();
+
+        penguinAdapter = new DiscoverOtherBooksAdapter(penguinBooks, getContext());
+        hachetteAdapter = new DiscoverOtherBooksAdapter(hachetteBooks, getContext());
+        javaAdapter = new DiscoverOtherBooksAdapter(javaBooks, getContext());
+        discoverAdapter = new DiscoverAdapter(recommendedBooks, getContext());
+        recyclerViewRecommended.setAdapter(discoverAdapter);
+        recyclerViewPenguin.setAdapter(penguinAdapter);
+        recyclerViewHachette.setAdapter(hachetteAdapter);
+        recyclerViewJava.setAdapter(javaAdapter);
+
         getRecommended(ParseUser.getCurrentUser().getString("accessToken"));
+        getOtherBooks("inpublisher:Penguin", "&orderBy=newest", penguinBooks, penguinAdapter);
+        getOtherBooks("inpublisher:Hachette%20Book%20Group", "&orderBy=relevance", hachetteBooks, hachetteAdapter);
+        getOtherBooks("intitle:Android", "&orderBy=relevance", javaBooks, javaAdapter);
+
 
         cFiction = view.findViewById(R.id.cFiction);
         cDrama = view.findViewById(R.id.cDrama);
@@ -150,8 +180,99 @@ public class DiscoverFragment extends Fragment {
         });
     }
 
+    private void getOtherBooks(String query, String parameter, ArrayList<BooksParse> bookList, DiscoverOtherBooksAdapter adapter) {
+        // below line is use to initialize
+        // the variable for our request queue.
+        mRequestQueue = Volley.newRequestQueue(requireContext());
+
+        // below line is use to clear cache this
+        // will be use when our data is being updated.
+        mRequestQueue.getCache().clear();
+
+        // below is the url for getting data from API in json format.
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40" + parameter + "&key=" + BuildConfig.BOOKS_KEY;
+
+        Log.i(TAG, "This is the line: " + url);
+
+        // below line we are  creating a new request queue.
+        RequestQueue queue = Volley.newRequestQueue(requireContext());
+
+
+        // below line is use to make json object request inside that we
+        // are passing url, get method and getting json object. .
+        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                //progressBar.setVisibility(View.GONE);
+                // inside on response method we are extracting all our json data.
+                try {
+                    JSONArray itemsArray = response.getJSONArray("items");
+                    Log.i(TAG, "Response: " + response);
+                    for (int i = 0; i < itemsArray.length(); i++) {
+                        JSONArray authorsArray = new JSONArray();
+                        String thumbnail = "";
+                        String buyLink = "";
+                        JSONObject itemsObj = itemsArray.getJSONObject(i);
+                        String googleId = itemsObj.optString("id");
+                        JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
+                        String title = volumeObj.optString("title");
+                        String subtitle = volumeObj.optString("subtitle");
+                        try {
+                            authorsArray = volumeObj.getJSONArray("authors");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No author", e);
+                        }
+                        String publisher = volumeObj.optString("publisher");
+                        String publishedDate = volumeObj.optString("publishedDate");
+                        String description = volumeObj.optString("description");
+                        int pageCount = volumeObj.optInt("pageCount");
+                        JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
+                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
+                        if (imageLinks != null) {
+                            thumbnail = imageLinks.optString("thumbnail");
+                        }
+                        if (saleInfoObj != null) {
+                            buyLink = saleInfoObj.optString("buyLink");
+                        }
+                        String previewLink = volumeObj.optString("previewLink");
+                        String infoLink = volumeObj.optString("infoLink");
+                        ArrayList<String> authorsArrayList = new ArrayList<>();
+                        if (authorsArray.length() != 0) {
+                            for (int j = 0; j < authorsArray.length(); j++) {
+                                authorsArrayList.add(authorsArray.optString(j));
+                            }
+                        }
+                        // after extracting all the data we are
+                        // saving this data in our modal class.
+                        BooksParse bookInfo = new BooksParse();
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
+
+                        // below line is use to pass our modal
+                        // class in our array list.
+                        bookList.add(bookInfo);
+                    }
+                    adapter.updateAdapter(bookList);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    // displaying a toast message when we get any error from API
+                    Toast.makeText(requireContext(), "No Data Found" + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // also displaying error message in toast.
+                Toast.makeText(requireContext(), "Error found is " + error, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error found is: " + error);
+            }
+        });
+        // at last we are adding our json object
+        // request in our request queue.
+        queue.add(booksObjrequest);
+    }
+
     private void getRecommended(String accessToken) {
-        discoverBooks = new ArrayList<>();
+        recommendedBooks = new ArrayList<>();
 
         // below line is use to initialize
         // the variable for our request queue.
@@ -216,11 +337,11 @@ public class DiscoverFragment extends Fragment {
                         // saving this data in our modal class.
                         BooksParse bookInfo = new BooksParse();
                         bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink , googleId);
-                        discoverBooks.add(bookInfo);
+                        recommendedBooks.add(bookInfo);
                     }
                     // below line is use to pass our modal
                     // class in our array list.
-                    discoverAdapter.updateAdapter(discoverBooks);
+                    discoverAdapter.updateAdapter(recommendedBooks);
                     Log.i(TAG, "URL: " + url);
                 } catch (JSONException e) {
                     e.printStackTrace();

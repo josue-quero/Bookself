@@ -30,7 +30,9 @@ import com.parse.SaveCallback;
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class AddToShelfActivity extends AppCompatActivity {
 
@@ -39,6 +41,7 @@ public class AddToShelfActivity extends AppCompatActivity {
     private ExtendedFloatingActionButton efabAddShelf2, efabAddToLibrary;
     private EditText etCompose;
     private BooksParse book;
+    private boolean isLiked, heartHasChanged;
     private String titleContent;
     private UsersBookProgress bookProgress;
     public static final String TAG = "AddToShelfActivity";
@@ -60,25 +63,30 @@ public class AddToShelfActivity extends AppCompatActivity {
         // Getting book object
         if (hasProgress) {
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
+            heartHasChanged = intent.getBooleanExtra("heartHasChanged", false);
             book = bookProgress.getBook();
             efabAddToLibrary.setVisibility(View.GONE);
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
-            efabAddToLibrary.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    onlyAddToLibrary = true;
-                    getPageInput(v);
-                }
-            });
+            isLiked = intent.getBooleanExtra("isLiked", false);
+            if (isLiked) {
+                efabAddToLibrary.setVisibility(View.GONE);
+            } else {
+                efabAddToLibrary.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        onlyAddToLibrary = true;
+                        getPageInput(v);
+                    }
+                });
+            }
         }
         layoutManager = new LinearLayoutManager(this);
         rvShelvesToAddTo.setLayoutManager(layoutManager);
         RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecorator(ContextCompat.getDrawable(this, R.drawable.divider));
         rvShelvesToAddTo.addItemDecoration(dividerItemDecoration);
-        //rvShelvesToAddTo.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         allShelves = new ArrayList<>();
-        shelvesAdapter = new AddToShelfAdapter(allShelves, this, book, hasProgress, bookProgress);
+        shelvesAdapter = new AddToShelfAdapter(allShelves, this, book, hasProgress, bookProgress, isLiked, heartHasChanged);
         rvShelvesToAddTo.setAdapter(shelvesAdapter);
 
         // Finding and adding on click listener for the add shelf button.
@@ -110,7 +118,11 @@ public class AddToShelfActivity extends AppCompatActivity {
                         titleContent = etCompose.getText().toString();
                         if (!titleContent.isEmpty()) {
                             if (hasProgress) {
-                                uploadShelfWithBook(bookProgress, titleContent);
+                                if (heartHasChanged) {
+                                    updateBookProgress(bookProgress);
+                                } else {
+                                    uploadShelfWithBook(bookProgress, titleContent);
+                                }
                             } else {
                                 getPageInput(v);
                             }
@@ -125,8 +137,13 @@ public class AddToShelfActivity extends AppCompatActivity {
         getParseShelves();
     }
 
-    private void addBookToLibrary() {
-
+    private void updateBookProgress(UsersBookProgress bookProgress) {
+        bookProgress.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                uploadShelfWithBook(bookProgress, titleContent);
+            }
+        });
     }
 
     private void getParseShelves() {
@@ -141,6 +158,7 @@ public class AddToShelfActivity extends AppCompatActivity {
         query.include(Shelves.KEY_USER);
         // limit query to latest 20 items
         query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereNotEqualTo("name", "Favorites");
         query.setLimit(20);
         // order posts by creation date (newest first)
         query.addAscendingOrder("createdAt");
@@ -175,8 +193,76 @@ public class AddToShelfActivity extends AppCompatActivity {
                     return;
                 }
                 Log.i(TAG, "Done updating shelf");
+                if (bookProgress.getHearted() && heartHasChanged) {
+                    getFavoritesShelf(bookProgress, false);
+                } else if (!bookProgress.getHearted() && heartHasChanged){
+                    getFavoritesShelf(bookProgress, true);
+                }
                 setResult(RESULT_OK);
                 finish();
+            }
+        });
+    }
+
+    private void getFavoritesShelf(UsersBookProgress bookProgress, boolean delete) {
+        // specify what type of data we want to query - Shelf.class
+        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
+        // include data referred by user key
+        query.include("progresses.book");
+        query.include("progresses.user");
+        query.include(UsersBookProgress.KEY_BOOK);
+        query.include(UsersBookProgress.KEY_USER);
+        query.include(Shelves.KEY_PROGRESSES);
+        query.include(Shelves.KEY_USER);
+        // limit query to latest 20 items
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("name", "Favorites");
+        // start an asynchronous call for posts
+        query.findInBackground(new FindCallback<Shelves>() {
+            @Override
+            public void done(List<Shelves> shelves, ParseException e) {
+                // check for errors
+                if (e != null) {
+                    Log.e(TAG, "Issue with getting Shelves", e);
+                    return;
+                }
+
+                if (delete) {
+                    deleteBookFromFavorites(shelves.get(0), bookProgress);
+                } else {
+                    uploadBookToFavorites(shelves.get(0), bookProgress);
+                }
+            }
+        });
+    }
+
+    private void deleteBookFromFavorites(Shelves shelf, UsersBookProgress bookProgress) {
+        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
+        relation.remove(bookProgress);
+        shelf.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Log.i(TAG, "Problem saving shelf", e);
+                    return;
+                }
+                Log.i(TAG, "Done updating shelf");
+            }
+        });
+    }
+
+    private void uploadBookToFavorites(Shelves shelf, UsersBookProgress bookProgress) {
+        shelf.increment("amountBooks");
+        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
+        relation.add(bookProgress);
+        shelf.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Log.i(TAG, "Problem saving shelf", e);
+                    return;
+                }
+                Log.i(TAG, "Done updating shelf");
             }
         });
     }
@@ -264,7 +350,11 @@ public class AddToShelfActivity extends AppCompatActivity {
 
     private void createAndSaveProgress(BooksParse book, int page) {
         UsersBookProgress newBookProgress = new UsersBookProgress();
-        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book);
+        if (page > 0){
+            Date today = new Date();
+            newBookProgress.setLastRead(today);
+        }
+        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked);
         newBookProgress.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -282,7 +372,6 @@ public class AddToShelfActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 
     private boolean isNumeric(String str) {

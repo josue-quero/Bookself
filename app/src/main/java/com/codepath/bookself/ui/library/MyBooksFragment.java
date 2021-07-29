@@ -30,11 +30,22 @@ public class MyBooksFragment extends Fragment {
 
     private static final String TAG = "MyBooksFragment";
     private RecyclerView recyclerView;
+    private boolean justCreated;
     ShelfBooksAdapter shelfBooksAdapter;
     ArrayList<UsersBookProgress> allProgresses;
 
     public MyBooksFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (!justCreated) {
+            Log.i(TAG, "My books updating");
+            getUserBooks();
+        }
+        justCreated = false;
     }
 
     @Override
@@ -54,6 +65,7 @@ public class MyBooksFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        justCreated = true;
         recyclerView = view.findViewById(R.id.rvMyBooks);
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         recyclerView.setLayoutManager(layoutManager);
@@ -90,6 +102,7 @@ public class MyBooksFragment extends Fragment {
 
                 // save received posts to list and notify adapter of new data
                 Log.i(TAG, "Comparing usersBookProgress" + posts);
+                allProgresses.clear();
                 allProgresses.addAll(posts);
                 shelfBooksAdapter.updateAdapter(allProgresses);
             }

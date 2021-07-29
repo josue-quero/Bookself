@@ -33,6 +33,7 @@ import com.parse.SaveCallback;
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
@@ -48,15 +49,17 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
     private EditText etCompose;
     private UsersBookProgress globalBookProgress;
     private Shelves shelfToInputTo;
-    private boolean userHasProgress;
+    private boolean userHasProgress, isLiked, heartHasChanged;
     public static final String TAG = "AddToShelfAdapter";
 
-    public AddToShelfAdapter(ArrayList<Shelves> shelvesList, Context context, BooksParse globalBook, boolean userHasProgress, UsersBookProgress globalBookProgress) {
+    public AddToShelfAdapter(ArrayList<Shelves> shelvesList, Context context, BooksParse globalBook, boolean userHasProgress, UsersBookProgress globalBookProgress, boolean isLiked, boolean heartHasChanged) {
         this.shelvesList = shelvesList;
         this.context = context;
         this.globalBook = globalBook;
         this.userHasProgress = userHasProgress;
         this.globalBookProgress = globalBookProgress;
+        this.isLiked = isLiked;
+        this.heartHasChanged = heartHasChanged;
     }
 
     @NonNull
@@ -106,7 +109,11 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 if (shelfToInputTo != null) {
                     Log.i(TAG, "Shelf trying to input to: " + shelfToInputTo.getNameShelf());
                     if (userHasProgress) {
-                        checkIfBookIsInShelf(globalBookProgress);
+                        if (heartHasChanged) {
+                            updateBookProgress(globalBookProgress);
+                        } else {
+                            checkIfBookIsInShelf(globalBookProgress);
+                        }
                     } else {
                         getPageInput(v);
                     }
@@ -125,6 +132,15 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 tvAmountBooks.setText("");
             }
         }
+    }
+
+    private void updateBookProgress(UsersBookProgress bookProgress) {
+        bookProgress.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                checkIfBookIsInShelf(globalBookProgress);
+            }
+        });
     }
 
     private void getPageInput(View v) {
@@ -239,7 +255,11 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
 
     private void createAndSaveProgress(BooksParse book, int page) {
         UsersBookProgress newBookProgress = new UsersBookProgress();
-        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book);
+        if (page > 0){
+            Date today = new Date();
+            newBookProgress.setLastRead(today);
+        }
+        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked);
         newBookProgress.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -267,9 +287,58 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                     return;
                 }
                 Log.i(TAG, "Done updating shelf");
+                if (bookProgress.getHearted()) {
+                    getFavoritesShelf(bookProgress);
+                }
                 ((AddToShelfActivity) context).setResult(RESULT_OK);
                 ((AddToShelfActivity) context).finish();
             }
         });
     }
+
+    private void getFavoritesShelf(UsersBookProgress bookProgress) {
+        // specify what type of data we want to query - Shelf.class
+        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
+        // include data referred by user key
+        query.include("progresses.book");
+        query.include("progresses.user");
+        query.include(UsersBookProgress.KEY_BOOK);
+        query.include(UsersBookProgress.KEY_USER);
+        query.include(Shelves.KEY_PROGRESSES);
+        query.include(Shelves.KEY_USER);
+        // limit query to latest 20 items
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("name", "Favorites");
+        // start an asynchronous call for posts
+        query.findInBackground(new FindCallback<Shelves>() {
+            @Override
+            public void done(List<Shelves> shelves, ParseException e) {
+                // check for errors
+                if (e != null) {
+                    Log.e(TAG, "Issue with getting Shelves", e);
+                    return;
+                }
+
+                uploadBookToFavorites(shelves.get(0), bookProgress);
+
+            }
+        });
+    }
+
+    private void uploadBookToFavorites(Shelves shelf, UsersBookProgress bookProgress) {
+        shelf.increment("amountBooks");
+        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
+        relation.add(bookProgress);
+        shelf.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Log.i(TAG, "Problem saving shelf", e);
+                    return;
+                }
+                Log.i(TAG, "Done updating shelf");
+            }
+        });
+    }
+
 }

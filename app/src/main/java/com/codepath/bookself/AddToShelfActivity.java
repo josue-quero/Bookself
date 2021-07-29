@@ -1,5 +1,6 @@
 package com.codepath.bookself;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -16,9 +17,22 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.parse.FindCallback;
 import com.parse.ParseException;
@@ -27,11 +41,16 @@ import com.parse.ParseRelation;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class AddToShelfActivity extends AppCompatActivity {
@@ -45,7 +64,11 @@ public class AddToShelfActivity extends AppCompatActivity {
     private String titleContent;
     private UsersBookProgress bookProgress;
     public static final String TAG = "AddToShelfActivity";
+    private String tokenUrl = "https://oauth2.googleapis.com/token";
+    private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     boolean onlyAddToLibrary;
+    private RequestQueue mRequestQueue;
+    GoogleSignInClient mGoogleSignInClient;
     ArrayList<Shelves> allShelves;
     AddToShelfAdapter shelvesAdapter;
 
@@ -55,7 +78,12 @@ public class AddToShelfActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_to_shelf);
         rvShelvesToAddTo = findViewById(R.id.rvShelvesToAddTo);
 
-
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
+                .requestServerAuthCode(clientId, true)
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         Intent intent = getIntent();
         boolean hasProgress = intent.getBooleanExtra("HasProgress", false);
         efabAddToLibrary = findViewById(R.id.efabAddToLibrary);
@@ -205,6 +233,7 @@ public class AddToShelfActivity extends AppCompatActivity {
     }
 
     private void getFavoritesShelf(UsersBookProgress bookProgress, boolean delete) {
+        manageGoogleUpload(bookProgress.getBook(), delete);
         // specify what type of data we want to query - Shelf.class
         ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
         // include data referred by user key
@@ -236,6 +265,20 @@ public class AddToShelfActivity extends AppCompatActivity {
         });
     }
 
+    private void manageGoogleUpload(BooksParse book, boolean delete) {
+        if (book.getEbookId().isEmpty()) {
+            if (book.getBuyLink().isEmpty()) {
+                lookForEbookVersion(book);
+            } else {
+                book.setEbookId(book.getGoogleId());
+                book.saveInBackground();
+                updateGoogleFavorites(ParseUser.getCurrentUser().getString("accessToken"), book, delete);
+            }
+        } else {
+            updateGoogleFavorites(ParseUser.getCurrentUser().getString("accessToken"), book, delete);
+        }
+    }
+
     private void deleteBookFromFavorites(Shelves shelf, UsersBookProgress bookProgress) {
         ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
         relation.remove(bookProgress);
@@ -265,6 +308,262 @@ public class AddToShelfActivity extends AppCompatActivity {
                 Log.i(TAG, "Done updating shelf");
             }
         });
+    }
+
+    private void updateGoogleFavorites(String accessToken, BooksParse currentBook, boolean delete) {
+        // below line is use to initialize
+        // the variable for our request queue.
+        mRequestQueue = Volley.newRequestQueue(this);
+
+        // below line is use to clear cache this
+        // will be use when our data is being updated.
+        mRequestQueue.getCache().clear();
+        String parameter;
+        if (delete){
+            parameter = "removeVolume";
+        } else {
+            parameter = "addVolume";
+        }
+
+        // below is the url for getting data from API in json format.
+        String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves/7/" + parameter + "?volumeId=" + currentBook.getEbookId() + "&key=" + BuildConfig.BOOKS_KEY;
+
+        // below line we are  creating a new request queue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+
+        // below line is use to make json object request inside that we
+        // are passing url, get method and getting json object. .
+        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.POST, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.i(TAG, "Correctly updated Google favorite books" + "Deleted: "+ delete);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                if (error.networkResponse.statusCode == 401) {
+                    refreshAccessToken(currentBook, delete);
+                } else {
+                    // irrecoverable errors. show error to user.
+                    Toast.makeText(AddToShelfActivity.this, "Error found is " + error, Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error found is: " + error);
+                }
+
+                if (error.networkResponse.statusCode == 403) {
+                    lookForEbookVersion(currentBook);
+                }
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Authorization", "Bearer " + accessToken);
+                return params;
+            }
+        };
+        // at last we are adding our json object
+        // request in our request queue.
+        queue.add(booksObjrequest);
+    }
+
+    private void lookForEbookVersion(BooksParse currentBook) {
+        List<BooksParse> bookList = new ArrayList<>();
+
+        // below line is use to initialize
+        // the variable for our request queue.
+        mRequestQueue = Volley.newRequestQueue(this);
+
+        // below line is use to clear cache this
+        // will be use when our data is being updated.
+        mRequestQueue.getCache().clear();
+
+        String title = currentBook.getTitle();
+        String newTitle = title.replaceAll("\\s+", "%20");
+
+        String author = currentBook.getAuthors().get(0);
+        String newAuthor = author.replaceAll("\\s+", "%20");
+        String authorParameter;
+        if (author.isEmpty()) {
+            authorParameter = "";
+        } else {
+            authorParameter = "+inauthor:" + newAuthor;
+        }
+
+        // below is the url for getting data from API in json format.
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + currentBook.getTitle() + "+intitle:" + currentBook.getTitle() + authorParameter + "&filter=ebooks&maxResults=40" + "&key=" + BuildConfig.BOOKS_KEY;
+
+        Log.i(TAG, "This is the line: " + url);
+
+        // below line we are  creating a new request queue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+
+        // below line is use to make json object request inside that we
+        // are passing url, get method and getting json object. .
+        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                //progressBar.setVisibility(View.GONE);
+                // inside on response method we are extracting all our json data.
+                try {
+                    if (response.getInt("totalItems") == 0) {
+                        Log.i(TAG, "Unable to find ebook version");
+                    } else {
+                        JSONArray itemsArray = response.getJSONArray("items");
+                        for (int i = 0; i < itemsArray.length(); i++) {
+                            Log.i(TAG, "Response: " + response);
+                            JSONArray authorsArray = new JSONArray();
+                            String thumbnail = "";
+                            String buyLink = "";
+                            JSONObject itemsObj = itemsArray.getJSONObject(i);
+                            String googleId = itemsObj.optString("id");
+                            JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
+                            String title = volumeObj.optString("title");
+                            String subtitle = volumeObj.optString("subtitle");
+                            try {
+                                authorsArray = volumeObj.getJSONArray("authors");
+                            } catch (JSONException e) {
+                                Log.i(TAG, "No author", e);
+                            }
+                            String publisher = volumeObj.optString("publisher");
+                            String publishedDate = volumeObj.optString("publishedDate");
+                            String description = volumeObj.optString("description");
+                            int pageCount = volumeObj.optInt("pageCount");
+                            JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
+                            JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
+                            if (imageLinks != null) {
+                                thumbnail = imageLinks.optString("thumbnail");
+                            }
+                            if (saleInfoObj != null) {
+                                buyLink = saleInfoObj.optString("buyLink");
+                            }
+                            String previewLink = volumeObj.optString("previewLink");
+                            String infoLink = volumeObj.optString("infoLink");
+                            ArrayList<String> authorsArrayList = new ArrayList<>();
+                            if (authorsArray.length() != 0) {
+                                for (int j = 0; j < authorsArray.length(); j++) {
+                                    authorsArrayList.add(authorsArray.optString(j));
+                                }
+                            }
+                            // after extracting all the data we are
+                            // saving this data in our modal class.
+                            BooksParse bookInfo = new BooksParse();
+                            bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
+
+                            // below line is use to pass our modal
+                            // class in our array list.
+                            if (!buyLink.isEmpty()) {
+                                currentBook.setEbookId(bookInfo.getGoogleId());
+                                currentBook.saveInBackground();
+                                updateGoogleFavorites(ParseUser.getCurrentUser().getString("accessToken"), currentBook, false);
+                                return;
+                            }
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    // displaying a toast message when we get any error from API
+                    Toast.makeText(AddToShelfActivity.this, "No Data Found" + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // also displaying error message in toast.
+                Toast.makeText(AddToShelfActivity.this, "Error found is " + error, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error found is: " + error);
+            }
+        });
+        // at last we are adding our json object
+        // request in our request queue.
+        queue.add(booksObjrequest);
+    }
+
+    private void refreshAccessToken(BooksParse book, boolean delete) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        JSONObject params = new JSONObject();
+        try {
+            params.put("client_id", "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com");
+            params.put("client_secret", "FlTA8PyCAx43q4XjK3X-wZbC");
+            params.put("refresh_token", ParseUser.getCurrentUser().getString("refreshToken"));
+            params.put("grant_type", "refresh_token");
+        } catch (JSONException ignored) {
+            // never thrown in this case
+        }
+
+        JsonObjectRequest refreshTokenRequest = new JsonObjectRequest(Request.Method.POST, tokenUrl, params, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    Log.i(TAG, "Success refresh token");
+                    String accessToken = response.getString("access_token");
+                    saveAccessToken(accessToken);
+                    updateGoogleFavorites(accessToken, book, delete);
+                } catch (JSONException e) {
+                    Toast.makeText(AddToShelfActivity.this, "Error using refreshed token " + e, Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error using refreshed token " + e);
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // show error to user. refresh failed.
+                Log.e("Error on token refresh", new String(error.networkResponse.data));
+                LaunchActivity temp = new LaunchActivity();
+                revokeAccess();
+                clearTokens();
+                goLaunchActivity();
+            }
+        });
+        queue.add(refreshTokenRequest);
+    }
+
+    private void clearTokens() {
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            // Other attributes than "email" will remain unchanged!
+            currentUser.put("accessToken", "");
+            currentUser.put("refreshToken", "");
+            // Saves the object.
+            currentUser.saveInBackground();
+        }
+    }
+
+    public void revokeAccess() {
+        mGoogleSignInClient.revokeAccess()
+                .addOnCompleteListener( this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        logOut();
+                    }
+                });
+    }
+
+    public void logOut() {
+        mGoogleSignInClient.signOut()
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        ParseUser.logOut();
+                    }
+                });
+    }
+
+    public void goLaunchActivity(){
+        Intent i = new Intent(this, LaunchActivity.class);
+        startActivity(i);
+        finish();
+    }
+
+    public void saveAccessToken(String refreshToken) {
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            // Other attributes than "email" will remain unchanged!
+            currentUser.put("accessToken", refreshToken);
+            // Saves the object.
+            currentUser.saveInBackground();
+        }
     }
 
     private void getPageInput(View v) {

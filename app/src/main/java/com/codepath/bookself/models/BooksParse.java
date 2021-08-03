@@ -29,6 +29,7 @@ public class BooksParse extends ParseObject {
     public static final String KEY_BUY_LINK = "buyLink";
     public static final String KEY_GOOGLE_ID = "googleId";
     public static final String KEY_EBOOK_ID = "ebookId";
+    public static final String KEY_CATEGORIES = "categories";
 
     public BooksParse() {
     }
@@ -127,9 +128,17 @@ public class BooksParse extends ParseObject {
 
     public void setEbookId(String ebookId) { put(KEY_EBOOK_ID, ebookId); }
 
+    public ArrayList<String> getCategories() {
+        return new ArrayList<String>(Objects.requireNonNull(getList(KEY_CATEGORIES)));
+    }
+
+    public void setCategories(ArrayList<String> categories) {
+        put(KEY_CATEGORIES, categories);
+    }
+
     public void setBook(String title, String subtitle, ArrayList<String> authors, String publisher,
                     String publishedDate, String description, int pageCount, String thumbnail,
-                    String previewLink, String infoLink, String buyLink, String googleId) {
+                    String previewLink, String infoLink, String buyLink, String googleId, ArrayList<String> categories) {
 
         put(KEY_TITLE, title);
         put(KEY_SUBTITLE, subtitle);
@@ -143,5 +152,6 @@ public class BooksParse extends ParseObject {
         put(KEY_INFO_LINK, infoLink);
         put(KEY_BUY_LINK, buyLink);
         put(KEY_GOOGLE_ID, googleId);
+        put(KEY_CATEGORIES, categories);
     }
 }

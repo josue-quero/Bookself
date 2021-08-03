@@ -82,19 +82,22 @@ public class DiscoverFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_discover, container, false);
     }
 
+    // Creating the view for the discover page
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         ((AppCompatActivity)getActivity()).getSupportActionBar().show();
 
+        // Getting the current Google signed in user
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
+                .requestScopes(new Scope(getString(R.string.booksScope)))
                 .requestServerAuthCode(clientId, true)
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
 
+        // Finding the recycler views and setting them with a linear layout manager
         recyclerViewRecommended = view.findViewById(R.id.rvDiscoverYou);
         recyclerViewPenguin = view.findViewById(R.id.rvDiscoverPenguin);
         recyclerViewHachette = view.findViewById(R.id.rvDiscoverHachette);
@@ -113,6 +116,7 @@ public class DiscoverFragment extends Fragment {
         hachetteBooks = new ArrayList<>();
         javaBooks = new ArrayList<>();
 
+        // Setting the adapters with empty arraylists
         penguinAdapter = new DiscoverOtherBooksAdapter(penguinBooks, getContext());
         hachetteAdapter = new DiscoverOtherBooksAdapter(hachetteBooks, getContext());
         javaAdapter = new DiscoverOtherBooksAdapter(javaBooks, getContext());
@@ -122,18 +126,24 @@ public class DiscoverFragment extends Fragment {
         recyclerViewHachette.setAdapter(hachetteAdapter);
         recyclerViewJava.setAdapter(javaAdapter);
 
+        // Below line is used to initialize
+        // the variable for the request queue.
+        mRequestQueue = Volley.newRequestQueue(requireContext());
+
+        // Getting all the books to populate the array discover page
         getRecommended(ParseUser.getCurrentUser().getString("accessToken"));
         getOtherBooks("inpublisher:Penguin", "&orderBy=newest", penguinBooks, penguinAdapter);
         getOtherBooks("inpublisher:Hachette%20Book%20Group", "&orderBy=relevance", hachetteBooks, hachetteAdapter);
         getOtherBooks("intitle:Android", "&orderBy=relevance", javaBooks, javaAdapter);
 
-
+        // Getting the card views for the generes part of the discover page
         cFiction = view.findViewById(R.id.cFiction);
         cDrama = view.findViewById(R.id.cDrama);
         cPoetry = view.findViewById(R.id.cPoetry);
         cHumor = view.findViewById(R.id.cHumor);
         cArt = view.findViewById(R.id.cArt);
 
+        // Setting on click listeners for the card views
         cFiction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,36 +190,29 @@ public class DiscoverFragment extends Fragment {
         });
     }
 
+    // Getting books from Google according to a query and parameters
     private void getOtherBooks(String query, String parameter, ArrayList<BooksParse> bookList, DiscoverOtherBooksAdapter adapter) {
-        // below line is use to initialize
-        // the variable for our request queue.
-        mRequestQueue = Volley.newRequestQueue(requireContext());
-
-        // below line is use to clear cache this
-        // will be use when our data is being updated.
+        // Below line is use to clear cache this
+        // will be used when our data is being updated.
         mRequestQueue.getCache().clear();
 
-        // below is the url for getting data from API in json format.
+        // Url for getting data from API in json format
         String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40" + parameter + "&key=" + BuildConfig.BOOKS_KEY;
 
-        Log.i(TAG, "This is the line: " + url);
-
-        // below line we are  creating a new request queue.
+        // Creating a new request queue
         RequestQueue queue = Volley.newRequestQueue(requireContext());
 
-
-        // below line is use to make json object request inside that we
-        // are passing url, get method and getting json object. .
+        // Making json object request
         JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                //progressBar.setVisibility(View.GONE);
-                // inside on response method we are extracting all our json data.
+                // inside on response method we are extracting all the json data of books
                 try {
                     JSONArray itemsArray = response.getJSONArray("items");
                     Log.i(TAG, "Response: " + response);
                     for (int i = 0; i < itemsArray.length(); i++) {
                         JSONArray authorsArray = new JSONArray();
+                        JSONArray categoriesArray = new JSONArray();
                         String thumbnail = "";
                         String buyLink = "";
                         JSONObject itemsObj = itemsArray.getJSONObject(i);
@@ -220,7 +223,12 @@ public class DiscoverFragment extends Fragment {
                         try {
                             authorsArray = volumeObj.getJSONArray("authors");
                         } catch (JSONException e) {
-                            Log.i(TAG, "No author", e);
+                            Log.i(TAG, "No author");
+                        }
+                        try {
+                            categoriesArray = volumeObj.getJSONArray("categories");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No categories");
                         }
                         String publisher = volumeObj.optString("publisher");
                         String publishedDate = volumeObj.optString("publishedDate");
@@ -242,20 +250,27 @@ public class DiscoverFragment extends Fragment {
                                 authorsArrayList.add(authorsArray.optString(j));
                             }
                         }
-                        // after extracting all the data we are
-                        // saving this data in our modal class.
-                        BooksParse bookInfo = new BooksParse();
-                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
+                        ArrayList<String> categoriesArrayList = new ArrayList<>();
+                        if (categoriesArray.length() != 0) {
+                            for (int x = 0; x < categoriesArray.length(); x++) {
+                                categoriesArrayList.add(categoriesArray.optString(x));
+                            }
+                        }
 
-                        // below line is use to pass our modal
-                        // class in our array list.
+                        // After extracting all the data I
+                        // save it in the modal class of the Book
+                        BooksParse bookInfo = new BooksParse();
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId, categoriesArrayList);
+
+                        // Adding one book to the array list of the books
                         bookList.add(bookInfo);
                     }
+                    // Notifying the adapter that the data changed
                     adapter.updateAdapter(bookList);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     // displaying a toast message when we get any error from API
-                    Toast.makeText(requireContext(), "No Data Found" + e, Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error retrieving data from book", e);
                 }
             }
         }, new Response.ErrorListener() {
@@ -266,41 +281,33 @@ public class DiscoverFragment extends Fragment {
                 Log.e(TAG, "Error found is: " + error);
             }
         });
-        // at last we are adding our json object
-        // request in our request queue.
+        // Adding the JSON object request in the request queue.
         queue.add(booksObjrequest);
     }
 
+    // Getting the Recommended books from the Google algorithm
     private void getRecommended(String accessToken) {
-        recommendedBooks = new ArrayList<>();
-
-        // below line is use to initialize
-        // the variable for our request queue.
-        mRequestQueue = Volley.newRequestQueue(requireContext());
-
-        // below line is use to clear cache this
-        // will be use when our data is being updated.
+        // Below line is use to clear cache this
+        // will be used when our data is being updated.
         mRequestQueue.getCache().clear();
 
-        // below is the url for getting data from API in json format.
+        // Url for getting data from API in json format.
         String url = "https://www.googleapis.com/books/v1/mylibrary/bookshelves/8/volumes?maxResults=40&key=" + BuildConfig.BOOKS_KEY;
 
-        // below line we are  creating a new request queue.
+        // Creating a new request queue
         RequestQueue queue = Volley.newRequestQueue(requireContext());
 
-
-        // below line is use to make json object request inside that we
-        // are passing url, get method and getting json object. .
+        // Making json object request
         JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                //progressBar.setVisibility(View.GONE);
-                // inside on response method we are extracting all our json data.
+                // inside on response method we are extracting all the json data of books
                 try {
                     JSONArray itemsArray = response.getJSONArray("items");
                     Log.i(TAG, "Bookshelf Response: " + itemsArray);
                     for (int i = 0; i < itemsArray.length(); i++) {
                         JSONArray authorsArray = new JSONArray();
+                        JSONArray categoriesArray = new JSONArray();
                         String thumbnail = "";
                         String buyLink = "";
                         JSONObject itemsObj = itemsArray.getJSONObject(i);
@@ -312,6 +319,11 @@ public class DiscoverFragment extends Fragment {
                             authorsArray = volumeObj.getJSONArray("authors");
                         } catch (JSONException e) {
                             Log.i(TAG, "No author", e);
+                        }
+                        try {
+                            categoriesArray = volumeObj.getJSONArray("categories");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No categories");
                         }
                         String publisher = volumeObj.optString("publisher");
                         String publishedDate = volumeObj.optString("publishedDate");
@@ -333,30 +345,36 @@ public class DiscoverFragment extends Fragment {
                                 authorsArrayList.add(authorsArray.optString(i));
                             }
                         }
-                        // after extracting all the data we are
-                        // saving this data in our modal class.
+                        ArrayList<String> categoriesArrayList = new ArrayList<>();
+                        if (categoriesArray.length() != 0) {
+                            for (int x = 0; x < categoriesArray.length(); x++) {
+                                categoriesArrayList.add(categoriesArray.optString(x));
+                            }
+                        }
+
+                        // After extracting all the data I
+                        // save it in the modal class of the Book
                         BooksParse bookInfo = new BooksParse();
-                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink , googleId);
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink , googleId, categoriesArrayList);
+                        // Adding one book to the array list of the books
                         recommendedBooks.add(bookInfo);
                     }
-                    // below line is use to pass our modal
-                    // class in our array list.
+                    // Notifying the adapter that the data changed
                     discoverAdapter.updateAdapter(recommendedBooks);
-                    Log.i(TAG, "URL: " + url);
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    // displaying a toast message when we get any error from API
+                    // Error
                     Log.e(TAG, "No data found: " + e);
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                // If the access token is expired, get the refresh token to request another one
                 if (error.networkResponse.statusCode == 401) {
                     refreshAccessToken();
                 } else {
                     // irrecoverable errors. show error to user.
-                    Toast.makeText(getContext(), "Error found is " + error, Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "Error found is: " + error);
                 }
             }
@@ -368,42 +386,44 @@ public class DiscoverFragment extends Fragment {
                 return params;
             }
         };
-        // at last we are adding our json object
-        // request in our request queue.
+        // Adding the JSON object request in the request queue.
         queue.add(booksObjrequest);
     }
 
+    // Getting refresh access token to get a new access token
     private void refreshAccessToken() {
+        mRequestQueue.getCache().clear();
         RequestQueue queue = Volley.newRequestQueue(requireContext());
         JSONObject params = new JSONObject();
+        // Putting the params for the volley request
         try {
-            params.put("client_id", "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com");
-            params.put("client_secret", "FlTA8PyCAx43q4XjK3X-wZbC");
+            params.put("client_id", getString(R.string.clientId));
+            params.put("client_secret", getString(R.string.clientSecret));
             params.put("refresh_token", ParseUser.getCurrentUser().getString("refreshToken"));
             params.put("grant_type", "refresh_token");
         } catch (JSONException ignored) {
             // never thrown in this case
         }
 
-        JsonObjectRequest refreshTokenRequest = new JsonObjectRequest(Request.Method.POST, tokenUrl, params, new Response.Listener<JSONObject>() {
+        // Creating the JSON request for the access token
+        JsonObjectRequest refreshTokenRequest = new JsonObjectRequest(Request.Method.POST, getString(R.string.tokenServerEncodedUrl), params, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 try {
                     Log.i(TAG, "Success refresh token");
+                    // If successful then we use the new access token and save it
                     String accessToken = response.getString("access_token");
                     saveAccessToken(accessToken);
                     getRecommended(accessToken);
                 } catch (JSONException e) {
-                    Toast.makeText(getContext(), "Error using refreshed token " + e, Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "Error using refreshed token " + e);
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                // show error to user. refresh failed.
+                // If the refresh token failed, then we log out the user and send him to the launch activity
                 Log.e("Error on token refresh", new String(error.networkResponse.data));
-                LaunchActivity temp = new LaunchActivity();
                 revokeAccess();
                 clearTokens();
                 goLaunchActivity();
@@ -412,6 +432,7 @@ public class DiscoverFragment extends Fragment {
         queue.add(refreshTokenRequest);
     }
 
+    // Function used to clear a user's tokens
     private void clearTokens() {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (currentUser != null) {
@@ -423,6 +444,7 @@ public class DiscoverFragment extends Fragment {
         }
     }
 
+    // Function to revoke access to a user
     public void revokeAccess() {
         mGoogleSignInClient.revokeAccess()
                 .addOnCompleteListener((Activity) requireContext(), new OnCompleteListener<Void>() {
@@ -433,6 +455,7 @@ public class DiscoverFragment extends Fragment {
                 });
     }
 
+    // Used to log out a user (Google and Parse)
     public void logOut() {
         mGoogleSignInClient.signOut()
                 .addOnCompleteListener((Activity) requireContext(), new OnCompleteListener<Void>() {
@@ -443,16 +466,17 @@ public class DiscoverFragment extends Fragment {
                 });
     }
 
+    // Going to launchActivity
     public void goLaunchActivity(){
         Intent i = new Intent(getContext(), LaunchActivity.class);
         startActivity(i);
         requireActivity().finish();
     }
 
+    // Saving the recently retrieved access token
     public void saveAccessToken(String refreshToken) {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (currentUser != null) {
-            // Other attributes than "email" will remain unchanged!
             currentUser.put("accessToken", refreshToken);
             // Saves the object.
             currentUser.saveInBackground();

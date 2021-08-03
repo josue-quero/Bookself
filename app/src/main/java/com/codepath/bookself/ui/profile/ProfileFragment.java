@@ -23,13 +23,17 @@ import com.bumptech.glide.Glide;
 import com.codepath.bookself.MyBooksAdapter;
 import com.codepath.bookself.ProfileAdapter;
 import com.codepath.bookself.R;
+import com.codepath.bookself.models.BooksParse;
+import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.parse.FindCallback;
 import com.parse.ParseException;
+import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.ParseRelation;
 import com.parse.ParseUser;
 
 import java.util.ArrayList;
@@ -66,7 +70,7 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         recyclerView = view.findViewById(R.id.rvBooksProgress);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         allProgresses = new ArrayList<>();
         profileAdapter = new ProfileAdapter(allProgresses, getContext());
@@ -75,12 +79,12 @@ public class ProfileFragment extends Fragment {
         // Hiding the toolbar
         ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
 
-        // Getting user's information
+        // Getting Google user's information
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(requireActivity());
         String personName = account.getDisplayName();
         Uri personPhoto = account.getPhotoUrl();
 
-
+        // Getting Parse user's information
         ParseUser currentUser = ParseUser.getCurrentUser();
         double pagesAmount = currentUser.getDouble("pagesReadAmount");
         double booksAmount = currentUser.getDouble("booksReadAmount");
@@ -103,6 +107,7 @@ public class ProfileFragment extends Fragment {
         tvBooksAmount = view.findViewById(R.id.tvBooksAmount);
         tvGoalPercentage = view.findViewById(R.id.tvGoalPercentage);
 
+        // Setting in the view all the  information about the user
         Glide.with(getContext()).load(personPhoto).circleCrop().into(ivProfilePicture);
         tvUsersName.setText(personName);
         tvPagesAmount.setText(String.valueOf((int) pagesAmount));
@@ -111,32 +116,49 @@ public class ProfileFragment extends Fragment {
         getUserBooksCurrentlyReading();
     }
 
+    // Getting books that are in progress
     private void getUserBooksCurrentlyReading() {
         // specify what type of data we want to query - UsersBookProgress.class
-        ParseQuery<UsersBookProgress> query = ParseQuery.getQuery(UsersBookProgress.class);
+        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
         // include data referred by user key
 
         query.include(UsersBookProgress.KEY_USER);
         query.include(UsersBookProgress.KEY_BOOK);
         // limit query to latest 20 items
         query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("name", "Reading");
         query.whereNotEqualTo("currentPage", 0);
         query.setLimit(20);
         // order posts by creation date (newest first)
         query.addDescendingOrder("createdAt");
         // start an asynchronous call for posts
-        query.findInBackground(new FindCallback<UsersBookProgress>() {
+        query.findInBackground(new FindCallback<Shelves>() {
             @Override
-            public void done(List<UsersBookProgress> booksOnProgress, ParseException e) {
+            public void done(List<Shelves> shelf, ParseException e) {
                 // check for errors
                 if (e != null) {
                     Log.e(TAG, "Issue with getting posts", e);
                     return;
                 }
 
-                // save received posts to list and notify adapter of new data
-                allProgresses.addAll(booksOnProgress);
-                profileAdapter.updateAdapter(allProgresses);
+                // Getting the books from the reading shelf
+                ParseRelation<UsersBookProgress> relation = shelf.get(0).getRelation("progresses");
+                ParseQuery<UsersBookProgress> query = relation.getQuery();
+                query.include(UsersBookProgress.KEY_BOOK);
+                query.include(UsersBookProgress.KEY_USER);
+                query.addDescendingOrder("lastRead");
+
+                query.findInBackground(new FindCallback<UsersBookProgress>() {
+                    @Override
+                    public void done(List<UsersBookProgress> objects, ParseException e) {
+                        if (e != null) {
+                            Log.e(TAG, "Issue with getting progresses", e);
+                            return;
+                        }
+                        allProgresses.addAll(objects);
+                        profileAdapter.updateAdapter(allProgresses);
+                    }
+                });
             }
         });
     }

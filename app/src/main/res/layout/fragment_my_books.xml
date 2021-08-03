@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,6 +13,31 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="0dp"
         android:paddingStart="5dp"
-        android:paddingEnd="5dp" />
+        android:paddingEnd="5dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-</RelativeLayout>
+    <com.leinardi.android.speeddial.SpeedDialOverlayLayout
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="I dont know" />
+
+    <com.leinardi.android.speeddial.SpeedDialView
+        android:id="@+id/speedDial"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="2dp"
+        app:layout_behavior="@string/speeddial_scrolling_view_snackbar_behavior"
+        app:sdExpansionMode="top"
+        app:sdMainFabAnimationRotateAngle="45"
+        app:sdMainFabClosedSrc="@drawable/ic_plus_24"
+        app:sdMainFabClosedIconColor="@color/white"
+        app:sdMainFabClosedBackgroundColor="#5DB075"
+        app:sdMainFabOpenedBackgroundColor="#5DB075"
+        app:sdMainFabOpenedSrc="@drawable/ic_plus_24"
+        app:sdOverlayLayout="@id/overlay">
+
+    </com.leinardi.android.speeddial.SpeedDialView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

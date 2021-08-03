@@ -63,7 +63,7 @@ public class ShelveDetailsActivity extends AppCompatActivity {
         recyclerView.setAdapter(shelfBooksAdapter);
         // Getting Shelve object
         int googleId = shelf.getGoogleId();
-        if (googleId == -1) {
+        if (googleId != 1) {
             Log.i(TAG, "Filing with googleId: " + String.valueOf(shelf.getGoogleId()));
             getParseShelf();
         } else {

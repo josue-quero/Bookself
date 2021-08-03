@@ -24,23 +24,16 @@ import java.util.List;
 
 public class LibraryFragment extends Fragment {
 
-    /**
-     * The number of pages (wizard steps) to show in this demo.
-     */
+    // The number of pages (wizard steps) to show in this demo.
     private static final int NUM_PAGES = 2;
     List<String> tabNames = Arrays.asList("My Books", "My Shelves");
 
-    /**
-     * The pager widget, which handles animation and allows swiping horizontally to access previous
-     * and next wizard steps.
-     */
+    // The pager widget, which handles animation and allows swiping horizontally to access previous
+    // and next wizard steps
     private ViewPager2 viewPager;
 
-    /**
-     * The pager adapter, which provides the pages to the view pager widget.
-     */
+    // The pager adapter, which provides the pages to the view pager widget
     private FragmentStateAdapter pagerAdapter;
-
 
     public LibraryFragment() {
         // Required empty public constructor
@@ -64,8 +57,10 @@ public class LibraryFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         // Instantiate a ViewPager2 and a PagerAdapter.
 
+        // Setting the toolbar
         ((AppCompatActivity)getActivity()).getSupportActionBar().show();
 
+        // Setting the tab layout and connecting it with the page viewer
         viewPager = view.findViewById(R.id.view_pager);
         pagerAdapter = new ScreenSlidePagerAdapter(this);
         viewPager.setAdapter(pagerAdapter);
@@ -77,11 +72,14 @@ public class LibraryFragment extends Fragment {
         ).attach();
     }
 
+    // Creating a class that extends the fragment state adapter
     private class ScreenSlidePagerAdapter extends FragmentStateAdapter {
         public ScreenSlidePagerAdapter(LibraryFragment fa) {
             super(fa);
         }
 
+        // When the user selects an item from the tab layout, a certain fragment
+        // is initialized
         @NonNull
         @Override
         public Fragment createFragment(int position) {
@@ -94,6 +92,7 @@ public class LibraryFragment extends Fragment {
             return new MyBooksFragment();
         }
 
+        // getting the item count, in this case just two.
         @Override
         public int getItemCount() {
             return NUM_PAGES;

@@ -34,10 +34,9 @@ public class MainActivity extends AppCompatActivity {
 
     final FragmentManager fragmentManager = getSupportFragmentManager();
     public static final String TAG = "MainActivity";
-    public String userId;
     GoogleSignInClient mGoogleSignInClient;
-    private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
 
+    // Passing this result to a fragment
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -49,42 +48,38 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Getting google client
+        // Getting google client so that we can sign out the user
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
-                .requestServerAuthCode(clientId, true)
+                .requestScopes(new Scope(getString(R.string.booksScope)))
+                .requestServerAuthCode(getString(R.string.clientId), true)
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         // Sets the Toolbar to act as the ActionBar for this Activity window.
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // Setting up the bottomNavigationView
         BottomNavigationView bottomNavigationView = (BottomNavigationView) binding.btNavigationView;
-
         // Definition of fragments
         final Fragment fragmentDiscover = new DiscoverFragment();
         final Fragment fragmentLibrary = new LibraryFragment();
         final Fragment fragmentProfile = new ProfileFragment();
 
         // Handle navigation selection
-
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 Fragment fragment = null;
                 switch (item.getItemId()) {
                     case R.id.navigation_library:
-                        //item.setIcon(R.drawable.ic_instagram_home_filled_24);
                         fragment = fragmentLibrary;
                         break;
                     case R.id.navigation_discover:
-                        //item.setIcon(R.drawable.ic_instagram_new_post_filled_24);
                         fragment = fragmentDiscover;
                         break;
                     case R.id.navigation_profile:
-                        //item.setIcon(R.drawable.ic_instagram_user_filled_24);
                         fragment = fragmentProfile;
                         break;
                     default: return true;
@@ -93,12 +88,11 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+        // By default we go to the discover page
         bottomNavigationView.setSelectedItemId(R.id.navigation_discover);
-
-        //getBooksInfo("Vonnegut");
-        getInfoFromSignedInUser();
     }
 
+    // Creating the Menu options in the toolbar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds to the action bar if it is present
@@ -107,9 +101,11 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    // Managing what happens when the user clicks on a determined menu item
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            // Logging out the user
             case R.id.extOption:
             // Compose icon has been selected
             //Navigate to compose activity
@@ -117,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 logOut();
                 goLaunchActivity();
                 return true;
+            // Start the Search flow (first expanding the search bar)
             case R.id.itSearch:
                 super.onSearchRequested();
                 return true;
@@ -125,24 +122,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Passing this result to a fragment
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    // Going to the launch activity once the user logs out
     public void goLaunchActivity(){
         Intent i = new Intent(this, LaunchActivity.class);
         startActivity(i);
         finish();
     }
 
-    private void getInfoFromSignedInUser() {
-        GoogleSignInAccount acct = GoogleSignIn.getLastSignedInAccount(this);
-        if (acct != null) {
-            userId = acct.getId();
-        }
-    }
-
+    // Loging out the current user (Google and Parse)
     public void logOut() {
         mGoogleSignInClient.signOut()
                 .addOnCompleteListener(this, new OnCompleteListener<Void>() {

@@ -13,7 +13,6 @@ public class Shelves extends ParseObject{
     public static final String KEY_NAME = "name";
     public static final String KEY_PROGRESSES = "progresses";
     public static final String KEY_GOOGLE_ID = "idShelf";
-    //public static final String KEY_PARSE_ID = "objectId";
     public static final String KEY_AMOUNT_BOOKS = "amountBooks";
     public static final String KEY_USER = "user";
 
@@ -42,12 +41,6 @@ public class Shelves extends ParseObject{
         put(KEY_GOOGLE_ID, id);
     }
 
-    /*public int getParseId() { return getInt(KEY_PARSE_ID);
-    }
-
-    public void setParseId(int id) {
-        put(KEY_PARSE_ID, id);
-    }*/
 
     public int getAmountBooks() {
         return getInt(KEY_AMOUNT_BOOKS);

@@ -3,6 +3,7 @@ package com.codepath.bookself;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -47,6 +49,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         return new ViewHolder(view);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBindViewHolder(@NonNull SearchAdapter.ViewHolder holder, int position) {
         BooksParse book = booksList.get(position);
@@ -67,14 +70,14 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
 
         TextView tvBookTitle;
         ImageView ivBookImage;
-        TextView tvPublisher;
+        TextView tvAuthors;
         TextView tvDate;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvBookTitle = itemView.findViewById(R.id.tvBookTitle);
             ivBookImage = itemView.findViewById(R.id.ivBookImage);
-            tvPublisher = itemView.findViewById(R.id.tvAuthor);
+            tvAuthors = itemView.findViewById(R.id.tvAuthor);
             tvDate = itemView.findViewById(R.id.tvDate);
             itemView.setOnClickListener(this);
         }
@@ -96,9 +99,10 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             }
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.O)
         public void bind(BooksParse book, int position) {
             tvBookTitle.setText(book.getTitle());
-            tvPublisher.setText(book.getPublisher());
+            tvAuthors.setText(String.join(", " , book.getAuthors()));
             tvDate.setText(book.getPublishedDate());
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {

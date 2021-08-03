@@ -104,7 +104,9 @@ public class AddToShelfActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         onlyAddToLibrary = true;
-                        getPageInput(v);
+                        if (book.getPageCount() != 0) {
+                            getPageInput(v);
+                        }
                     }
                 });
             }
@@ -145,7 +147,7 @@ public class AddToShelfActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         titleContent = etCompose.getText().toString();
                         if (!titleContent.isEmpty()) {
-                            if (hasProgress) {
+                            if (hasProgress || book.getPageCount() == 0) {
                                 if (heartHasChanged) {
                                     updateBookProgress(bookProgress);
                                 } else {
@@ -186,7 +188,7 @@ public class AddToShelfActivity extends AppCompatActivity {
         query.include(Shelves.KEY_USER);
         // limit query to latest 20 items
         query.whereEqualTo("user", ParseUser.getCurrentUser());
-        query.whereNotEqualTo("name", "Favorites");
+        query.whereNotEqualTo("idShelf", 0);
         query.setLimit(20);
         // order posts by creation date (newest first)
         query.addAscendingOrder("createdAt");
@@ -222,45 +224,14 @@ public class AddToShelfActivity extends AppCompatActivity {
                 }
                 Log.i(TAG, "Done updating shelf");
                 if (bookProgress.getHearted() && heartHasChanged) {
-                    getFavoritesShelf(bookProgress, false);
+                    getShelf(bookProgress, "Favorite", false);
+                    manageGoogleUpload(bookProgress.getBook(), false);
                 } else if (!bookProgress.getHearted() && heartHasChanged){
-                    getFavoritesShelf(bookProgress, true);
+                    getShelf(bookProgress, "Favorite", true);
+                    manageGoogleUpload(bookProgress.getBook(), true);
                 }
                 setResult(RESULT_OK);
                 finish();
-            }
-        });
-    }
-
-    private void getFavoritesShelf(UsersBookProgress bookProgress, boolean delete) {
-        manageGoogleUpload(bookProgress.getBook(), delete);
-        // specify what type of data we want to query - Shelf.class
-        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
-        // include data referred by user key
-        query.include("progresses.book");
-        query.include("progresses.user");
-        query.include(UsersBookProgress.KEY_BOOK);
-        query.include(UsersBookProgress.KEY_USER);
-        query.include(Shelves.KEY_PROGRESSES);
-        query.include(Shelves.KEY_USER);
-        // limit query to latest 20 items
-        query.whereEqualTo("user", ParseUser.getCurrentUser());
-        query.whereEqualTo("name", "Favorites");
-        // start an asynchronous call for posts
-        query.findInBackground(new FindCallback<Shelves>() {
-            @Override
-            public void done(List<Shelves> shelves, ParseException e) {
-                // check for errors
-                if (e != null) {
-                    Log.e(TAG, "Issue with getting Shelves", e);
-                    return;
-                }
-
-                if (delete) {
-                    deleteBookFromFavorites(shelves.get(0), bookProgress);
-                } else {
-                    uploadBookToFavorites(shelves.get(0), bookProgress);
-                }
             }
         });
     }
@@ -277,37 +248,6 @@ public class AddToShelfActivity extends AppCompatActivity {
         } else {
             updateGoogleFavorites(ParseUser.getCurrentUser().getString("accessToken"), book, delete);
         }
-    }
-
-    private void deleteBookFromFavorites(Shelves shelf, UsersBookProgress bookProgress) {
-        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
-        relation.remove(bookProgress);
-        shelf.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e != null) {
-                    Log.i(TAG, "Problem saving shelf", e);
-                    return;
-                }
-                Log.i(TAG, "Done updating shelf");
-            }
-        });
-    }
-
-    private void uploadBookToFavorites(Shelves shelf, UsersBookProgress bookProgress) {
-        shelf.increment("amountBooks");
-        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
-        relation.add(bookProgress);
-        shelf.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e != null) {
-                    Log.i(TAG, "Problem saving shelf", e);
-                    return;
-                }
-                Log.i(TAG, "Done updating shelf");
-            }
-        });
     }
 
     private void updateGoogleFavorites(String accessToken, BooksParse currentBook, boolean delete) {
@@ -414,6 +354,7 @@ public class AddToShelfActivity extends AppCompatActivity {
                         for (int i = 0; i < itemsArray.length(); i++) {
                             Log.i(TAG, "Response: " + response);
                             JSONArray authorsArray = new JSONArray();
+                            JSONArray categoriesArray = new JSONArray();
                             String thumbnail = "";
                             String buyLink = "";
                             JSONObject itemsObj = itemsArray.getJSONObject(i);
@@ -425,6 +366,11 @@ public class AddToShelfActivity extends AppCompatActivity {
                                 authorsArray = volumeObj.getJSONArray("authors");
                             } catch (JSONException e) {
                                 Log.i(TAG, "No author", e);
+                            }
+                            try {
+                                categoriesArray = volumeObj.getJSONArray("categories");
+                            } catch (JSONException e) {
+                                Log.i(TAG, "No categories");
                             }
                             String publisher = volumeObj.optString("publisher");
                             String publishedDate = volumeObj.optString("publishedDate");
@@ -446,10 +392,16 @@ public class AddToShelfActivity extends AppCompatActivity {
                                     authorsArrayList.add(authorsArray.optString(j));
                                 }
                             }
+                            ArrayList<String> categoriesArrayList = new ArrayList<>();
+                            if (categoriesArray.length() != 0) {
+                                for (int x = 0; x < categoriesArray.length(); x++) {
+                                    categoriesArrayList.add(categoriesArray.optString(x));
+                                }
+                            }
                             // after extracting all the data we are
                             // saving this data in our modal class.
                             BooksParse bookInfo = new BooksParse();
-                            bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
+                            bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId, categoriesArrayList);
 
                             // below line is use to pass our modal
                             // class in our array list.
@@ -649,11 +601,23 @@ public class AddToShelfActivity extends AppCompatActivity {
 
     private void createAndSaveProgress(BooksParse book, int page) {
         UsersBookProgress newBookProgress = new UsersBookProgress();
-        if (page > 0){
+        String shelf = "";
+        if (page != 0){
+            if (page == book.getPageCount()) {
+                newBookProgress.setRead(true);
+                shelf = "Read";
+                ParseUser.getCurrentUser().increment("bookReadAmount");
+            } else {
+                shelf = "Reading";
+                ParseUser.getCurrentUser().increment("pagesReadAmount", page);
+            }
+            ParseUser.getCurrentUser().saveInBackground();
             Date today = new Date();
             newBookProgress.setLastRead(today);
         }
         newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked);
+        Log.i(TAG, "Type of shelf to save to: " + shelf);
+        String finalShelf = shelf;
         newBookProgress.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -663,12 +627,64 @@ public class AddToShelfActivity extends AppCompatActivity {
                 }
 
                 Log.i(TAG, "Done saving progress");
+                if (!finalShelf.isEmpty()) {
+                    getShelf(newBookProgress, finalShelf, false);
+                }
                 if (!onlyAddToLibrary) {
                     uploadShelfWithBook(newBookProgress, titleContent);
                 } else {
                     setResult(RESULT_OK);
                     finish();
                 }
+            }
+        });
+    }
+
+    private void getShelf(UsersBookProgress newBookProgress, String nameShelf, boolean delete) {
+        // specify what type of data we want to query - Shelf.class
+        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
+        // include data referred by user key
+        query.include("progresses.book");
+        query.include("progresses.user");
+        query.include(UsersBookProgress.KEY_BOOK);
+        query.include(UsersBookProgress.KEY_USER);
+        query.include(Shelves.KEY_PROGRESSES);
+        query.include(Shelves.KEY_USER);
+        // limit query to latest 20 items
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("name", nameShelf);
+        // start an asynchronous call for posts
+        query.findInBackground(new FindCallback<Shelves>() {
+            @Override
+            public void done(List<Shelves> shelves, ParseException e) {
+                // check for errors
+                if (e != null) {
+                    Log.e(TAG, "Issue with getting Shelves", e);
+                    return;
+                }
+                uploadBookInShelf(shelves.get(0), newBookProgress, delete);
+            }
+        });
+    }
+
+    private void uploadBookInShelf(Shelves shelf, UsersBookProgress bookProgress, boolean delete) {
+        Log.i(TAG, "Updating: " + shelf.getNameShelf());
+        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
+        if (delete) {
+            shelf.increment("amountBooks", -1);
+            relation.remove(bookProgress);
+        } else {
+            relation.add(bookProgress);
+            shelf.increment("amountBooks");
+        }
+        shelf.saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                if (e != null) {
+                    Log.i(TAG, "Problem saving shelf", e);
+                    return;
+                }
+                Log.i(TAG, "Done updating shelf");
             }
         });
     }

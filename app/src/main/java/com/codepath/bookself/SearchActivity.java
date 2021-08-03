@@ -104,6 +104,7 @@ public class SearchActivity extends AppCompatActivity {
                     Log.i(TAG, "Response: " + response);
                     for (int i = 0; i < itemsArray.length(); i++) {
                         JSONArray authorsArray = new JSONArray();
+                        JSONArray categoriesArray = new JSONArray();
                         String thumbnail = "";
                         String buyLink = "";
                         JSONObject itemsObj = itemsArray.getJSONObject(i);
@@ -115,6 +116,11 @@ public class SearchActivity extends AppCompatActivity {
                             authorsArray = volumeObj.getJSONArray("authors");
                         } catch (JSONException e) {
                             Log.i(TAG, "No author", e);
+                        }
+                        try {
+                            categoriesArray = volumeObj.getJSONArray("categories");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No categories");
                         }
                         String publisher = volumeObj.optString("publisher");
                         String publishedDate = volumeObj.optString("publishedDate");
@@ -136,10 +142,16 @@ public class SearchActivity extends AppCompatActivity {
                                 authorsArrayList.add(authorsArray.optString(j));
                             }
                         }
+                        ArrayList<String> categoriesArrayList = new ArrayList<>();
+                        if (categoriesArray.length() != 0) {
+                            for (int x = 0; x < categoriesArray.length(); x++) {
+                                categoriesArrayList.add(categoriesArray.optString(x));
+                            }
+                        }
                         // after extracting all the data we are
                         // saving this data in our modal class.
                         BooksParse bookInfo = new BooksParse();
-                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId, categoriesArrayList);
 
                         // below line is use to pass our modal
                         // class in our array list.

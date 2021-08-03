@@ -112,8 +112,8 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ViewHold
             tvAuthor.setText(String.join(", " , book.getAuthors()));
             DateFormat df = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
             Log.i("ProfileAdapter", "Date: " +progress.getUpdatedAt());
-            String lastReadAt = df.format(progress.getUpdatedAt());
-            tvDate.setText("Last read: " +lastReadAt);
+            String lastReadAt = df.format(progress.getLastRead());
+            tvDate.setText("Last read: " + lastReadAt);
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);

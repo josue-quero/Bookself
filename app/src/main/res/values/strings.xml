@@ -10,7 +10,6 @@
     <string name="text_library">Library</string>
     <string name="text_discover">Discover</string>
     <string name="text_profile">Profile</string>
-    <string name="server_client_id">562541520541-2j9aqk39pp8nts5efc2c9dfc3b218k13.apps.googleusercontent.com</string>
 
     <string name="back4app_server_url">https://parseapi.back4app.com/</string>
 
@@ -29,4 +28,14 @@
     <string name="title_hint">Your shelf title</string>
     <string name="create">Create</string>
     <string name="new_shelf">Name your shelf</string>
+
+    <string name="clientId">562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com</string>
+    <string name="booksScope">https://www.googleapis.com/auth/books</string>
+    <string name="clientSecret">FlTA8PyCAx43q4XjK3X-wZbC</string>
+    <string name="tokenServerEncodedUrl">https://oauth2.googleapis.com/token</string>
+
+    <item name="fab_action1" type="id" />
+    <item name="fab_action2" type="id" />
+    <item name="fab_action3" type="id" />
+    <item name="fab_action4" type="id" />
 </resources>

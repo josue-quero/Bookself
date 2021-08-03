@@ -64,7 +64,6 @@ public class ShelvesFragment extends Fragment {
 
     private static final String TAG = "MyBooksFragment";
     private String tokenUrl = "https://oauth2.googleapis.com/token";
-    private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerView;
     private EditText etCompose;
@@ -92,6 +91,7 @@ public class ShelvesFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_shelves, container, false);
     }
 
+    // Refreshing the list of books when resuming the fragment
     @Override
     public void onResume() {
         super.onResume();
@@ -108,12 +108,15 @@ public class ShelvesFragment extends Fragment {
         recyclerView = view.findViewById(R.id.rvListShelves);
 
         justCreated = true;
+        // Creating the GoogleSignInOptions to be able to sign out
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
-                .requestServerAuthCode(clientId, true)
+                .requestScopes(new Scope(getString(R.string.booksScope)))
+                .requestServerAuthCode(getString(R.string.clientId), true)
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
+
+        // Setting the layout manager and the adapter for the Shelves page
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
         RecyclerView.ItemDecoration dividerItemDecoration = new DividerItemDecorator(ContextCompat.getDrawable(requireContext(), R.drawable.divider));
@@ -121,12 +124,16 @@ public class ShelvesFragment extends Fragment {
         allShelves = new ArrayList<>();
         shelvesAdapter = new ShelvesAdapter(allShelves, getContext(), this);
         recyclerView.setAdapter(shelvesAdapter);
+
+        // Checking whether to scroll to the bottom of the page or not
         if (getArguments() != null) {
+            Toast.makeText(getContext(), "For some reason refreshing shelves", Toast.LENGTH_SHORT).show();
             refreshShelves(true);
         } else {
             getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), false);
         }
-        // Finding and adding on click listener for the add shelf button.
+
+        // Finding add shelf button and adding on click listener for it
         addShelfButton = view.findViewById(R.id.efabAddShelf2);
         addShelfButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,6 +159,7 @@ public class ShelvesFragment extends Fragment {
                 alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        // Getting the title of the new shelf
                         String titleContent = etCompose.getText().toString();
                         if (!titleContent.isEmpty()) {
                             uploadShelf(titleContent);
@@ -165,12 +173,14 @@ public class ShelvesFragment extends Fragment {
         });
     }
 
-    public void refreshShelves(boolean gointBottom) {
+    // Refreshing the shelves view with the newest ones
+    public void refreshShelves(boolean goingBottom) {
         allShelves.clear();
         shelvesAdapter.updateAdapter(allShelves);
-        getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), gointBottom);
+        getGoogleShelves(ParseUser.getCurrentUser().getString("accessToken"), goingBottom);
     }
 
+    // Upload the most recently named shelf
     private void uploadShelf(String titleContent) {
         Shelves newShelf = new Shelves();
         newShelf.put("name", titleContent);
@@ -185,6 +195,7 @@ public class ShelvesFragment extends Fragment {
         });
     }
 
+    // Initialized when a shelf is deleted
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         Log.i(TAG, "GettingResult");
@@ -194,22 +205,23 @@ public class ShelvesFragment extends Fragment {
         }
     }
 
+    // Getting all the shelves that belong to the user
     private void getParseShelves(boolean goingToTheBottom) {
-        // specify what type of data we want to query - Shelf.class
+        // Specify what type of data we want to query - Shelf.class
         ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
-        // include data referred by user key
+        // Include data referred by user key
         query.include("progresses.book");
         query.include("progresses.user");
         query.include(UsersBookProgress.KEY_BOOK);
         query.include(UsersBookProgress.KEY_USER);
         query.include(Shelves.KEY_PROGRESSES);
         query.include(Shelves.KEY_USER);
-        // limit query to latest 20 items
+        // Limit query to latest 20 items
         query.whereEqualTo("user", ParseUser.getCurrentUser());
         query.setLimit(20);
-        // order posts by creation date (newest first)
+        // Order posts by creation date (newest first)
         query.addAscendingOrder("createdAt");
-        // start an asynchronous call for posts
+        // Start an asynchronous call for posts
         query.findInBackground(new FindCallback<Shelves>() {
             @Override
             public void done(List<Shelves> posts, ParseException e) {
@@ -219,7 +231,7 @@ public class ShelvesFragment extends Fragment {
                     return;
                 }
 
-                // save received posts to list and notify adapter of new data
+                // Save received posts to list and notify adapter of new data
                 posts.add(null);
                 allShelves.addAll(posts);
                 shelvesAdapter.updateAdapter(allShelves);
@@ -230,6 +242,7 @@ public class ShelvesFragment extends Fragment {
         });
     }
 
+    // Getting the Google Shelf from Google
     private void getGoogleShelves(String accessToken, boolean goingToTheBottom) {
         // below line is use to initialize
         // the variable for our request queue.
@@ -245,13 +258,11 @@ public class ShelvesFragment extends Fragment {
         // below line we are  creating a new request queue.
         RequestQueue queue = Volley.newRequestQueue(requireContext());
 
-
         // below line is use to make json object request inside that we
         // are passing url, get method and getting json object. .
         JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
-                //progressBar.setVisibility(View.GONE);
                 // inside on response method we are extracting all our json data.
                 Log.i(TAG, "Bookshelf Response: " + response);
                 String title = response.optString("title");
@@ -263,7 +274,6 @@ public class ShelvesFragment extends Fragment {
                 // below line is use to pass our modal
                 // class in our array list.
                 getParseShelves(goingToTheBottom);
-                Log.i(TAG, "URL: " + url);
             }
         }, new Response.ErrorListener() {
             @Override

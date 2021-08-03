@@ -46,28 +46,21 @@ public class LaunchActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 1;
     public static final String TAG = "LaunchActivity";
     public GoogleSignInClient mGoogleSignInClient;
-    private String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     private String authCode;
     public static String accessToken;
     public static String refreshToken;
     public static Long expiresInSeconds;
 
-    private ActivityLaunchBinding binding;
-
+    // Setting the Google Sign In and the button that starts the signin flow
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //binding = ActivityLaunchBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_launch);
 
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if (account != null) {
-            Log.i(TAG, "No one signed in");
-        }
-
+        // Creating the GoogleSignInOptions to ask for the necessary scopes (Google Books)
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestScopes(new Scope("https://www.googleapis.com/auth/books"))
-                .requestServerAuthCode(clientId, true)
+                .requestScopes(new Scope(getString(R.string.booksScope)))
+                .requestServerAuthCode(getString(R.string.clientId), true)
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -77,44 +70,50 @@ public class LaunchActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "Clicked");
-                Toast.makeText(LaunchActivity.this, "Clicked", Toast.LENGTH_SHORT).show();
                 signIn();
             }
         });
     }
 
+    // Redirecting the user to the Google Servers
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
+    // If the user is signed in, we go directly to the Main Activity
     @Override
     protected void onStart() {
         super.onStart();
         ParseUser currentUser = ParseUser.getCurrentUser();
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        // Check both the Parse and Google current user
         if (account != null && currentUser != null) {
             Log.i(TAG, "No one signed in");
             goMainActivity();
         }
     }
 
+    // Goes to the Main Activity
     private void goMainActivity(){
         Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
         finish();
     }
 
+    // When the user has completed the sign in in the Google Server this function is called
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RC_SIGN_IN) {
+        // If the return call is correct then I handle the SignIn
+        if (requestCode == RC_SIGN_IN && resultCode == RESULT_OK) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleSignInResult(task);
         }
     }
 
+    // Getting the authCode from the server response and start the login in Parse
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try{
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
@@ -128,10 +127,62 @@ public class LaunchActivity extends AppCompatActivity {
 
             loginParse(personEmail, personId);
         } catch (ApiException e) {
-            Log.w(TAG, "Sign in Result: failed code =" + e);
+            Log.e(TAG, "Sign in Result: failed code ", e);
         }
     }
 
+    // Login to Parse
+    private void loginParse(String username, String password) {
+        ParseUser.logInInBackground(username, password, new LogInCallback() {
+            @Override
+            public void done(ParseUser user, ParseException e) {
+                // If there was an error sign in the user to Parse, then the user is new.
+                if (e != null) {
+                    Log.i(TAG, "New user", e);
+
+                    // I Sign up the new user
+                    ParseUser newUser = new ParseUser();
+                    newUser.setUsername(username);
+                    newUser.setPassword(password);
+                    newUser.signUpInBackground(new SignUpCallback() {
+                        @Override
+                        public void done(ParseException e) {
+                            if (e == null){
+
+                                // Start the flow for a new user
+                                // Get the access and refresh tokens
+                                try {
+                                    getTokens();
+                                } catch (IOException ioException) {
+                                    ioException.printStackTrace();
+                                }
+                                return;
+                            } else{
+                                Log.e(TAG, "Problem with sign up", e);
+                            }
+                        }
+                    });
+                    return;
+                }
+
+                // Checking if the current user has access and refresh token or not
+                if (Objects.equals(ParseUser.getCurrentUser().getString("accessToken"), "") && Objects.equals(ParseUser.getCurrentUser().getString("refreshToken"), "")) {
+                    try {
+                        // Get the access and refresh tokens
+                        getTokens();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                // If the user has access and refresh tokens he's sent to the Main Activity
+                } else {
+                    goMainActivity();
+                    Toast.makeText(LaunchActivity.this, "Success!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    // Getting access and refresh tokens from Google
     private void getTokens() throws IOException {
         Thread t = new Thread(new Runnable() {
             public void run() {
@@ -140,13 +191,11 @@ public class LaunchActivity extends AppCompatActivity {
                     tokenResponse = new GoogleAuthorizationCodeTokenRequest(
                             new NetHttpTransport(),
                             GsonFactory.getDefaultInstance(),
-                            "https://oauth2.googleapis.com/token",
-                            clientId,
-                            "FlTA8PyCAx43q4XjK3X-wZbC",
+                            getString(R.string.tokenServerEncodedUrl),
+                            getString(R.string.clientId),
+                            getString(R.string.clientSecret),
                             authCode,
-                            "")  // Specify the same redirect URI that you use with your web
-                            // app. If you don't have a web version of your app, you can
-                            // specify an empty string.
+                            "")
                             .execute();
                     accessToken = tokenResponse.getAccessToken();
                     refreshToken = tokenResponse.getRefreshToken();
@@ -177,55 +226,10 @@ public class LaunchActivity extends AppCompatActivity {
         t.start();
     }
 
-    private void loginParse(String username, String password) {
-        Log.i(TAG, "Attempting to login user " + username);
-        ParseUser.logInInBackground(username, password, new LogInCallback() {
-            @Override
-            public void done(ParseUser user, ParseException e) {
-                if (e != null) {
-                    Log.i(TAG, "New user", e);
-                    ParseUser newUser = new ParseUser();
-
-                    newUser.setUsername(username);
-                    newUser.setPassword(password);
-                    newUser.signUpInBackground(new SignUpCallback() {
-                        @Override
-                        public void done(ParseException e) {
-                            if (e == null){
-                                //Get the access and refresh tokens
-                                try {
-                                    Toast.makeText(LaunchActivity.this, "Successful signup", Toast.LENGTH_SHORT).show();
-                                    getTokens();
-                                } catch (IOException ioException) {
-                                    ioException.printStackTrace();
-                                }
-                                return;
-                            } else{
-                                Log.e(TAG, "Problem with sign up", e);
-                            }
-                        }
-                    });
-                    return;
-                }
-
-                if (Objects.equals(ParseUser.getCurrentUser().getString("accessToken"), "") && Objects.equals(ParseUser.getCurrentUser().getString("refreshToken"), "")) {
-                    try {
-                        getTokens();
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
-                } else {
-                    goMainActivity();
-                    Toast.makeText(LaunchActivity.this, "Success!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-    }
-
+    // Saving access and refresh tokens in Parse database
     public void saveTokens(String accessToken, String refreshToken) {
         ParseUser currentUser = ParseUser.getCurrentUser();
         if (currentUser != null) {
-            // Other attributes than "email" will remain unchanged!
             currentUser.put("accessToken", accessToken);
             currentUser.put("refreshToken", refreshToken);
             // Saves the object.

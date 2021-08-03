@@ -2,21 +2,22 @@ package com.codepath.bookself;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.SearchManager;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.telecom.Call;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,7 +39,6 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.parse.FindCallback;
-import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.ParseRelation;
@@ -68,9 +68,10 @@ public class DetailsActivity extends AppCompatActivity {
     private String tokenUrl = "https://oauth2.googleapis.com/token";
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
 
-    TextView titleTV, subtitleTV, publisherTV, descTV, pageTV, publishDateTV, tvProgress;
-    Button previewBtn, buyBtn, btnAddToLibrary;
-    private ImageView bookIV, ivHeart;
+    private TextView titleTV, tvGenres, publisherTV, descTV, pageTV, publishDateTV, tvProgress, tvAuthors;
+    private Button previewBtn, buyBtn, btnRead;
+    private ImageView bookIV, ivHeart, ivAddToLibrary;
+    private EditText etCompose;
     private BooksParse book;
     private boolean gettingOut = true, initialStateHeart, lastStateHeart;
     private UsersBookProgress bookProgress;
@@ -78,6 +79,7 @@ public class DetailsActivity extends AppCompatActivity {
     private RequestQueue mRequestQueue;
     GoogleSignInClient mGoogleSignInClient;
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,18 +94,21 @@ public class DetailsActivity extends AppCompatActivity {
         // Get the progress items from the view
         progressBar = findViewById(R.id.progressBar);
         tvProgress = findViewById(R.id.tvProgress);
-        btnAddToLibrary = findViewById(R.id.btnAddToLibrary);
+        ivAddToLibrary = findViewById(R.id.ivAddToLibrary);
         // initializing our views..
         titleTV = findViewById(R.id.idTVTitle);
-        subtitleTV = findViewById(R.id.idTVSubTitle);
+        tvAuthors = findViewById(R.id.tvAuthors);
         publisherTV = findViewById(R.id.idTVpublisher);
         descTV = findViewById(R.id.idTVDescription);
-        pageTV = findViewById(R.id.idTVNoOfPages);
-        publishDateTV = findViewById(R.id.idTVPublishDate);
+        pageTV = findViewById(R.id.tvNoOfPagesText);
+        publishDateTV = findViewById(R.id.tvPublishDateText);
         previewBtn = findViewById(R.id.idBtnPreview);
         buyBtn = findViewById(R.id.idBtnBuy);
         bookIV = findViewById(R.id.idIVbook);
         ivHeart = findViewById(R.id.ivHeart);
+        tvGenres = findViewById(R.id.tvGenresText);
+        btnRead = findViewById(R.id.btnRead);
+        btnRead.setVisibility(View.GONE);
         // Checking if there is progress available
         Intent intent = getIntent();
         boolean fromMyLibrary = intent.getBooleanExtra("FromMyLibrary", false);
@@ -118,17 +123,18 @@ public class DetailsActivity extends AppCompatActivity {
             initialStateHeart = bookProgress.getHearted();
             lastStateHeart = initialStateHeart;
             if (bookProgress.getHearted()) {
-                ivHeart.setImageResource(R.drawable.like);
+                ivHeart.setImageResource(R.drawable.green_filled_heart);
             }
             setMainView();
             setHeartButton();
-            setAddButton(true);
+            setAddAndReadButton(true);
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
             checkBookProgressInDatabase();
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void setMainView() {
         // getting the data which we have passed from our adapter class.
         title = book.getTitle();
@@ -144,12 +150,18 @@ public class DetailsActivity extends AppCompatActivity {
 
         // after getting the data we are setting
         // that data to our text views and image view.
-        titleTV.setText(title);
-        subtitleTV.setText(subtitle);
+        tvAuthors.setText(String.join(", " , book.getAuthors()));
+
+        if (!subtitle.isEmpty()) {
+            subtitle = ": " + subtitle;
+        }
+        titleTV.setText(title + subtitle);
+
+        tvGenres.setText(String.join(", ", book.getCategories()));
         publisherTV.setText(publisher);
-        publishDateTV.setText("Published On : " + publishedDate);
+        publishDateTV.setText(publishedDate);
         descTV.setText(description);
-        pageTV.setText("No Of Pages : " + pageCount);
+        pageTV.setText(String.valueOf(pageCount));
         String httpLink = book.getThumbnail();
         if (!httpLink.equals("")) {
             String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
@@ -209,6 +221,7 @@ public class DetailsActivity extends AppCompatActivity {
         query.addDescendingOrder("createdAt");
         // start an asynchronous call for posts
         query.findInBackground(new FindCallback<UsersBookProgress>() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void done(List<UsersBookProgress> progress, ParseException e) {
                 // check for errors
@@ -224,7 +237,7 @@ public class DetailsActivity extends AppCompatActivity {
                     initialStateHeart = false;
                     lastStateHeart = initialStateHeart;
                     setMainView();
-                    setAddButton(false);
+                    setAddAndReadButton(false);
                     return;
                 }
                 // Put the progress of this book
@@ -240,10 +253,10 @@ public class DetailsActivity extends AppCompatActivity {
                 lastStateHeart = initialStateHeart;
                 // Check if the book has been liked by the user
                 if (bookProgress.getHearted()) {
-                    ivHeart.setImageResource(R.drawable.like);
+                    ivHeart.setImageResource(R.drawable.green_filled_heart);
                 }
                 setMainView();
-                setAddButton(true);
+                setAddAndReadButton(true);
             }
         });
     }
@@ -253,10 +266,10 @@ public class DetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (lastStateHeart) {
-                    ivHeart.setImageResource(R.drawable.heart);
+                    ivHeart.setImageResource(R.drawable.unfilled_heart);
                     lastStateHeart = false;
                 } else {
-                    ivHeart.setImageResource(R.drawable.like);
+                    ivHeart.setImageResource(R.drawable.green_filled_heart);
                     lastStateHeart = true;
                 }
             }
@@ -382,6 +395,7 @@ public class DetailsActivity extends AppCompatActivity {
                         for (int i = 0; i < itemsArray.length(); i++) {
                             Log.i(TAG, "Response: " + response);
                             JSONArray authorsArray = new JSONArray();
+                            JSONArray categoriesArray = new JSONArray();
                             String thumbnail = "";
                             String buyLink = "";
                             JSONObject itemsObj = itemsArray.getJSONObject(i);
@@ -393,6 +407,11 @@ public class DetailsActivity extends AppCompatActivity {
                                 authorsArray = volumeObj.getJSONArray("authors");
                             } catch (JSONException e) {
                                 Log.i(TAG, "No author", e);
+                            }
+                            try {
+                                categoriesArray = volumeObj.getJSONArray("categories");
+                            } catch (JSONException e) {
+                                Log.i(TAG, "No categories");
                             }
                             String publisher = volumeObj.optString("publisher");
                             String publishedDate = volumeObj.optString("publishedDate");
@@ -414,10 +433,16 @@ public class DetailsActivity extends AppCompatActivity {
                                     authorsArrayList.add(authorsArray.optString(j));
                                 }
                             }
+                            ArrayList<String> categoriesArrayList = new ArrayList<>();
+                            if (categoriesArray.length() != 0) {
+                                for (int x = 0; x < categoriesArray.length(); x++) {
+                                    categoriesArrayList.add(categoriesArray.optString(x));
+                                }
+                            }
                             // after extracting all the data we are
                             // saving this data in our modal class.
                             BooksParse bookInfo = new BooksParse();
-                            bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId);
+                            bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId, categoriesArrayList);
 
                             // below line is use to pass our modal
                             // class in our array list.
@@ -536,7 +561,8 @@ public class DetailsActivity extends AppCompatActivity {
 
     private void updateBookProgress(UsersBookProgress bookProgress) {
         bookProgress.saveInBackground();
-        getFavoritesShelf(bookProgress);
+        getShelf(bookProgress, "Favorites", !lastStateHeart);
+        manageGoogleUpload(bookProgress.getBook());
     }
 
     private void checkIfBookInDatabase(BooksParse book, int pagesAmount) {
@@ -608,41 +634,8 @@ public class DetailsActivity extends AppCompatActivity {
 
                 Log.i(TAG, "Done saving favorited progress");
 
-                getFavoritesShelf(newBookProgress);
-            }
-        });
-    }
-
-    private void getFavoritesShelf(UsersBookProgress bookProgress) {
-        manageGoogleUpload(bookProgress.getBook());
-        // specify what type of data we want to query - Shelf.class
-        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
-        // include data referred by user key
-        query.include("progresses.book");
-        query.include("progresses.user");
-        query.include(UsersBookProgress.KEY_BOOK);
-        query.include(UsersBookProgress.KEY_USER);
-        query.include(Shelves.KEY_PROGRESSES);
-        query.include(Shelves.KEY_USER);
-        // limit query to latest 20 items
-        query.whereEqualTo("user", ParseUser.getCurrentUser());
-        query.whereEqualTo("name", "Favorites");
-        // start an asynchronous call for posts
-        query.findInBackground(new FindCallback<Shelves>() {
-            @Override
-            public void done(List<Shelves> shelves, ParseException e) {
-                // check for errors
-                if (e != null) {
-                    Log.e(TAG, "Issue with getting Shelves", e);
-                    return;
-                }
-
-                if (lastStateHeart) {
-                    uploadBookToFavorites(shelves.get(0), bookProgress);
-                } else {
-                    deleteBookFromFavorites(shelves.get(0), bookProgress);
-                }
-
+                getShelf(newBookProgress, "Favorites", !lastStateHeart);
+                manageGoogleUpload(newBookProgress.getBook());
             }
         });
     }
@@ -662,6 +655,7 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     private void deleteBookFromFavorites(Shelves shelf, UsersBookProgress bookProgress) {
+        shelf.increment("amountBooks", -1);
         ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
         relation.remove(bookProgress);
         shelf.saveInBackground(new SaveCallback() {
@@ -676,10 +670,15 @@ public class DetailsActivity extends AppCompatActivity {
         });
     }
 
-    private void uploadBookToFavorites(Shelves shelf, UsersBookProgress bookProgress) {
-        shelf.increment("amountBooks");
+    private void uploadBookInShelf(Shelves shelf, UsersBookProgress bookProgress, boolean delete) {
         ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
-        relation.add(bookProgress);
+        if (delete) {
+            shelf.increment("amountBooks", -1);
+            relation.remove(bookProgress);
+        } else {
+            relation.add(bookProgress);
+            shelf.increment("amountBooks");
+        }
         shelf.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -693,15 +692,36 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
 
-    private void setAddButton(boolean bookHasProgress) {
+    private void setAddAndReadButton(boolean bookHasProgress) {
         // Add this book to your library
         if (bookHasProgress) {
-            btnAddToLibrary.setText("ADD TO SHELF");
+            ivAddToLibrary.setImageResource(R.drawable.green_filled_book_shelf);
+            if (book.getPageCount() != 0) {
+                String btnText = "";
+                if (bookProgress.getCurrentPage() == book.getPageCount()) {
+                    btnText = "Read again";
+                } else {
+                    if (bookProgress.getCurrentPage() == 0) {
+                        btnText = "Start Reading";
+                    } else {
+                        btnText = "Continue Reading";
+                    }
+                }
+                btnRead.setVisibility(View.VISIBLE);
+                btnRead.setText(btnText);
+
+                btnRead.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        getPageInput(v);
+                    }
+                });
+            }
         }
 
         Log.i(TAG, "Button set");
 
-        btnAddToLibrary.setOnClickListener(new View.OnClickListener() {
+        ivAddToLibrary.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.i(TAG, "Clicked to save");
@@ -721,6 +741,101 @@ public class DetailsActivity extends AppCompatActivity {
                 startActivityForResult(i, 2);
             }
         });
+    }
+
+    private void getPageInput(View v) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.pages_progress_dialog, null, false);;
+        etCompose = view.findViewById(R.id.etPagesAmount);
+        builder.setView(view)
+                .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String pagesContent = etCompose.getText().toString();
+                if (!pagesContent.isEmpty()) {
+                    if (isNumeric(pagesContent) && Integer.parseInt(pagesContent) <= book.getPageCount() && Integer.parseInt(pagesContent) != bookProgress.getCurrentPage()) {
+                        int currentPage = Integer.parseInt(pagesContent);
+                        Date today = new Date();
+                        bookProgress.setLastRead(today);
+                        int lastPageRead = bookProgress.getCurrentPage();
+                        bookProgress.setCurrentPage(currentPage);
+                        if (currentPage == book.getPageCount()) {
+                            if (!bookProgress.getRead()) {
+                                bookProgress.setRead(true);
+                                getShelf(bookProgress, "Read", false);
+                            }
+                            ParseUser.getCurrentUser().increment("booksReadAmount");
+                            getShelf(bookProgress, "Reading" , true);
+                        }
+
+                        if ((lastPageRead == 0 || lastPageRead == book.getPageCount())) {
+                            getShelf(bookProgress, "Reading", false);
+                        }
+
+                        if (lastPageRead == book.getPageCount()) {
+                            ParseUser.getCurrentUser().increment("pagesReadAmount", currentPage);
+                        } else {
+                            ParseUser.getCurrentUser().increment("pagesReadAmount", (currentPage-lastPageRead));
+                        }
+                        ParseUser.getCurrentUser().saveInBackground();
+                        bookProgress.saveInBackground(new SaveCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                checkBookProgressInDatabase();
+                                alertDialog.dismiss();
+                            }
+                        });
+                    } else {
+                        Toast.makeText(DetailsActivity.this, "Sorry, the amount of pages is invalid (the same as before or more than book's length", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(DetailsActivity.this, "Sorry, the amount of pages cannot be empty", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void getShelf(UsersBookProgress newBookProgress, String nameShelf, boolean delete) {
+        // specify what type of data we want to query - Shelf.class
+        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
+        // include data referred by user key
+        query.include("progresses.book");
+        query.include("progresses.user");
+        query.include(UsersBookProgress.KEY_BOOK);
+        query.include(UsersBookProgress.KEY_USER);
+        query.include(Shelves.KEY_PROGRESSES);
+        query.include(Shelves.KEY_USER);
+        // limit query to latest 20 items
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereEqualTo("name", nameShelf);
+        // start an asynchronous call for posts
+        query.findInBackground(new FindCallback<Shelves>() {
+            @Override
+            public void done(List<Shelves> shelves, ParseException e) {
+                // check for errors
+                if (e != null) {
+                    Log.e(TAG, "Issue with getting Shelves", e);
+                    return;
+                }
+                uploadBookInShelf(shelves.get(0), newBookProgress, delete);
+            }
+        });
+    }
+
+    private boolean isNumeric(String str) {
+        return str != null && str.matches("[0-9]+");
     }
 
     @Override

@@ -108,7 +108,7 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 shelfToInputTo = shelvesList.get(position);
                 if (shelfToInputTo != null) {
                     Log.i(TAG, "Shelf trying to input to: " + shelfToInputTo.getNameShelf());
-                    if (userHasProgress) {
+                    if (userHasProgress || globalBook.getPageCount() == 0) {
                         if (heartHasChanged) {
                             updateBookProgress(globalBookProgress);
                         } else {
@@ -255,11 +255,22 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
 
     private void createAndSaveProgress(BooksParse book, int page) {
         UsersBookProgress newBookProgress = new UsersBookProgress();
-        if (page > 0){
+        String shelf = "";
+        if (page != 0){
+            if (page == book.getPageCount()) {
+                newBookProgress.setRead(true);
+                shelf = "Read";
+                ParseUser.getCurrentUser().increment("bookReadAmount");
+            } else {
+                shelf = "Reading";
+                ParseUser.getCurrentUser().increment("pagesReadAmount", page);
+            }
+            ParseUser.getCurrentUser().saveInBackground();
             Date today = new Date();
             newBookProgress.setLastRead(today);
         }
         newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked);
+        String finalShelf = shelf;
         newBookProgress.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -267,7 +278,9 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                     Log.i(TAG, "Problem saving progress", e);
                     return;
                 }
-
+                if (!finalShelf.isEmpty()) {
+                    getShelf(newBookProgress, finalShelf, false);
+                }
                 Log.i(TAG, "Done saving progress");
                 updateShelf(newBookProgress);
             }
@@ -288,7 +301,7 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 }
                 Log.i(TAG, "Done updating shelf");
                 if (bookProgress.getHearted()) {
-                    getFavoritesShelf(bookProgress);
+                    getShelf(bookProgress, "Favorites", false);
                 }
                 ((AddToShelfActivity) context).setResult(RESULT_OK);
                 ((AddToShelfActivity) context).finish();
@@ -296,7 +309,7 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
         });
     }
 
-    private void getFavoritesShelf(UsersBookProgress bookProgress) {
+    private void getShelf(UsersBookProgress newBookProgress, String nameShelf, boolean delete) {
         // specify what type of data we want to query - Shelf.class
         ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
         // include data referred by user key
@@ -308,7 +321,7 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
         query.include(Shelves.KEY_USER);
         // limit query to latest 20 items
         query.whereEqualTo("user", ParseUser.getCurrentUser());
-        query.whereEqualTo("name", "Favorites");
+        query.whereEqualTo("name", nameShelf);
         // start an asynchronous call for posts
         query.findInBackground(new FindCallback<Shelves>() {
             @Override
@@ -318,17 +331,20 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                     Log.e(TAG, "Issue with getting Shelves", e);
                     return;
                 }
-
-                uploadBookToFavorites(shelves.get(0), bookProgress);
-
+                uploadBookInShelf(shelves.get(0), newBookProgress, delete);
             }
         });
     }
 
-    private void uploadBookToFavorites(Shelves shelf, UsersBookProgress bookProgress) {
-        shelf.increment("amountBooks");
+    private void uploadBookInShelf(Shelves shelf, UsersBookProgress bookProgress, boolean delete) {
         ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
-        relation.add(bookProgress);
+        if (delete) {
+            shelf.increment("amountBooks", -1);
+            relation.remove(bookProgress);
+        } else {
+            relation.add(bookProgress);
+            shelf.increment("amountBooks");
+        }
         shelf.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -340,5 +356,4 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
             }
         });
     }
-
 }

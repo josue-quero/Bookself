@@ -109,11 +109,15 @@ public class DetailsActivity extends AppCompatActivity {
         tvGenres = findViewById(R.id.tvGenresText);
         btnRead = findViewById(R.id.btnRead);
         btnRead.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
+        tvProgress.setVisibility(View.GONE);
         // Checking if there is progress available
         Intent intent = getIntent();
         boolean fromMyLibrary = intent.getBooleanExtra("FromMyLibrary", false);
         // Getting book object
         if (fromMyLibrary) {
+            progressBar.setVisibility(View.VISIBLE);
+            tvProgress.setVisibility(View.VISIBLE);
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
             book = bookProgress.getBook();
             double currentProgress = ((double) bookProgress.getCurrentPage()/(double) book.getPageCount()) * 100;
@@ -232,10 +236,8 @@ public class DetailsActivity extends AppCompatActivity {
 
                 setHeartButton();
                 if (progress.isEmpty()) {
-                    progressBar.setVisibility(View.GONE);
-                    tvProgress.setVisibility(View.GONE);
                     initialStateHeart = false;
-                    lastStateHeart = initialStateHeart;
+                    lastStateHeart = false;
                     setMainView();
                     setAddAndReadButton(false);
                     return;

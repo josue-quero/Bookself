@@ -35,7 +35,7 @@
         android:textSize="11sp" />
 
     <TextView
-        android:id="@+id/tvAuthor"
+        android:id="@+id/tvAuthors"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/tvBookTitle"
@@ -50,7 +50,7 @@
         android:id="@+id/tvDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvAuthor"
+        android:layout_below="@id/tvAuthors"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="false"
         android:layout_marginTop="10dp"
@@ -63,7 +63,7 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:layout_below="@+id/tvAuthor"
+        android:layout_below="@+id/tvAuthors"
         android:layout_gravity="center_horizontal"
         android:layout_marginStart="0dp"
         android:layout_marginTop="3dp"

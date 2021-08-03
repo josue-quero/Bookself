@@ -78,7 +78,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ViewHold
             tvDate = itemView.findViewById(R.id.tvDate);
             progressBar = itemView.findViewById(R.id.progressBar);
             tvProgressBook = itemView.findViewById(R.id.tvProgressBook);
-            tvAuthor = itemView.findViewById(R.id.tvAuthor);
+            tvAuthor = itemView.findViewById(R.id.tvAuthors);
             itemView.setOnClickListener(this);
         }
 

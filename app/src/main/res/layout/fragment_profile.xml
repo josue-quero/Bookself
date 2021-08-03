@@ -51,7 +51,7 @@
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/tvPagesTitle"
+                    android:id="@+id/tvPublisher"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -64,7 +64,7 @@
                     android:background="@color/colorPrimaryDark" />
 
                 <TextView
-                    android:id="@+id/tvBooksTitle"
+                    android:id="@+id/tvDatePublished"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

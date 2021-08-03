@@ -13,8 +13,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".AddToShelfActivity">
-        </activity>
+        <activity android:name=".ui.library.ResultsISBN"></activity>
+        <activity android:name=".ui.library.BarcodeResultsActivity" />
+        <activity android:name=".AddToShelfActivity" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.codepath.fileprovider.bookself"
@@ -24,9 +26,9 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/fileprovider" />
         </provider>
+
         <activity android:name=".ShelveDetailsActivity" />
-        <activity
-            android:name=".SearchActivity">
+        <activity android:name=".SearchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
@@ -59,7 +61,6 @@
         <meta-data
             android:name="com.parse.CLIENT_KEY"
             android:value="@string/back4app_client_key" />
-
     </application>
 
 </manifest>

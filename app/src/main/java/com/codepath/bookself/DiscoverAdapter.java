@@ -147,10 +147,10 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
             //TODO: Put placeholder image for when a book has no image
             tvBookTitle.setText(book.getTitle());
             Animation fallInAnimation = AnimationUtils.loadAnimation(context, R.anim.fall_down_animation);
+            rvContainer.clearAnimation();
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
-                rvContainer.clearAnimation();
                 Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {

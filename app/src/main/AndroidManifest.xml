@@ -26,6 +26,10 @@
                 android:resource="@xml/fileprovider" />
         </provider>
 
+        <provider
+            android:authorities="com.codepath.SuggestionProvider"
+            android:name=".SuggestionProvider" />
+
         <activity android:name=".ShelveDetailsActivity" />
         <activity android:name=".SearchActivity">
             <intent-filter>

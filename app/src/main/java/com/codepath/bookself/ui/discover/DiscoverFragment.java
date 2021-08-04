@@ -10,9 +10,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SnapHelper;
 
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -124,6 +127,15 @@ public class DiscoverFragment extends Fragment {
         recyclerViewPenguin.setAdapter(penguinAdapter);
         recyclerViewHachette.setAdapter(hachetteAdapter);
         recyclerViewJava.setAdapter(javaAdapter);
+
+        SnapHelper snapHelperRecommended = new LinearSnapHelper();
+        snapHelperRecommended.attachToRecyclerView(recyclerViewRecommended);
+        /*SnapHelper snapHelperPenguin = new LinearSnapHelper();
+        snapHelperPenguin.attachToRecyclerView(recyclerViewPenguin);
+        SnapHelper snapHelperHachette = new LinearSnapHelper();
+        snapHelperHachette.attachToRecyclerView(recyclerViewHachette);
+        SnapHelper snapHelperJava = new LinearSnapHelper();
+        snapHelperJava.attachToRecyclerView(recyclerViewJava);*/
 
         // Below line is used to initialize
         // the variable for the request queue.

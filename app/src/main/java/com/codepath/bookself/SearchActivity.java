@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.SearchRecentSuggestions;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,6 +63,9 @@ public class SearchActivity extends AppCompatActivity {
         Intent intent = getIntent();
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
+            SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
+                    SuggestionProvider.AUTHORITY, SuggestionProvider.MODE);
+            suggestions.saveRecentQuery(query, null);
             newQuery = query.replaceAll("\\s+", "%20");
             parameter = "&orderBy=relevance";
             Log.i(TAG, "Query: " + newQuery);
@@ -69,6 +73,7 @@ public class SearchActivity extends AppCompatActivity {
             newQuery = intent.getStringExtra("Genre");
             parameter = "&orderBy=newest";
         }
+
         doBookSearch(newQuery, parameter);
     }
 

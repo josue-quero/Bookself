@@ -157,7 +157,9 @@ public class DetailsActivity extends AppCompatActivity {
 
         // after getting the data we are setting
         // that data to our text views and image view.
-        tvAuthors.setText(String.join(", " , book.getAuthors()));
+        if (!book.getAuthors().isEmpty()){
+            tvAuthors.setText(String.join(", " , book.getAuthors()));
+        }
 
         if (!subtitle.isEmpty()) {
             subtitle = ": " + subtitle;

@@ -60,7 +60,7 @@ public class AddToShelfActivity extends AppCompatActivity {
     private ExtendedFloatingActionButton efabAddShelf2, efabAddToLibrary;
     private EditText etCompose;
     private BooksParse book;
-    private boolean isLiked, heartHasChanged;
+    private boolean isLiked, heartHasChanged, hasProgress;
     private String titleContent;
     private UsersBookProgress bookProgress;
     public static final String TAG = "AddToShelfActivity";
@@ -85,15 +85,30 @@ public class AddToShelfActivity extends AppCompatActivity {
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         Intent intent = getIntent();
-        boolean hasProgress = intent.getBooleanExtra("HasProgress", false);
+        hasProgress = intent.getBooleanExtra("HasProgress", false);
         efabAddToLibrary = findViewById(R.id.efabAddToLibrary);
         onlyAddToLibrary = false;
+        heartHasChanged = false;
         // Getting book object
         if (hasProgress) {
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
             heartHasChanged = intent.getBooleanExtra("heartHasChanged", false);
             book = bookProgress.getBook();
-            efabAddToLibrary.setVisibility(View.GONE);
+            if (bookProgress.getWishlist()) {
+                efabAddToLibrary.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        onlyAddToLibrary = true;
+                        if (book.getPageCount() != 0) {
+                            getPageInput(v);
+                        } else {
+                            createAndSaveProgress(bookProgress, book, 0);
+                        }
+                    }
+                });
+            } else {
+                efabAddToLibrary.setVisibility(View.GONE);
+            }
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
             isLiked = intent.getBooleanExtra("isLiked", false);
@@ -106,6 +121,8 @@ public class AddToShelfActivity extends AppCompatActivity {
                         onlyAddToLibrary = true;
                         if (book.getPageCount() != 0) {
                             getPageInput(v);
+                        } else {
+                            checkIfBookInDatabase(book, 0);
                         }
                     }
                 });
@@ -150,6 +167,10 @@ public class AddToShelfActivity extends AppCompatActivity {
                             if (hasProgress || book.getPageCount() == 0) {
                                 if (heartHasChanged) {
                                     updateBookProgress(bookProgress);
+                                } else if (bookProgress.getWishlist() && book.getPageCount() != 0) {
+                                    getPageInput(v);
+                                } else if (bookProgress.getWishlist() && book.getPageCount() == 0) {
+                                    createAndSaveProgress(bookProgress, book, 0);
                                 } else {
                                     uploadShelfWithBook(bookProgress, titleContent);
                                 }
@@ -541,7 +562,11 @@ public class AddToShelfActivity extends AppCompatActivity {
                 String pagesContent = etCompose.getText().toString();
                 if (!pagesContent.isEmpty()) {
                     if (isNumeric(pagesContent) && Integer.parseInt(pagesContent) <= book.getPageCount()) {
-                        checkIfBookInDatabase(book, Integer.parseInt(pagesContent));
+                        if (hasProgress) {
+                            createAndSaveProgress(bookProgress, bookProgress.getBook(), Integer.parseInt(pagesContent));
+                        } else {
+                            checkIfBookInDatabase(book, Integer.parseInt(pagesContent));
+                        }
                         alertDialog.dismiss();
                     } else {
                         Toast.makeText(AddToShelfActivity.this, "Sorry, the amount of pages is invalid", Toast.LENGTH_LONG).show();
@@ -578,7 +603,7 @@ public class AddToShelfActivity extends AppCompatActivity {
                 // Creating progress for the book
                 Log.i(TAG, "This book has been uploaded previously" + bookFound);
                 BooksParse retrievedBook = bookFound.get(0);
-                createAndSaveProgress(retrievedBook, pagesAmount);
+                createAndSaveProgress(new UsersBookProgress(),retrievedBook, pagesAmount);
 
             }
         });
@@ -594,13 +619,12 @@ public class AddToShelfActivity extends AppCompatActivity {
                 }
 
                 Log.i(TAG, "Done saving book");
-                createAndSaveProgress(book, pagesAmount);
+                createAndSaveProgress(new UsersBookProgress() ,book, pagesAmount);
             }
         });
     }
 
-    private void createAndSaveProgress(BooksParse book, int page) {
-        UsersBookProgress newBookProgress = new UsersBookProgress();
+    private void createAndSaveProgress(UsersBookProgress newBookProgress,BooksParse book, int page) {
         String shelf = "";
         if (page != 0){
             if (page == book.getPageCount()) {
@@ -615,9 +639,12 @@ public class AddToShelfActivity extends AppCompatActivity {
             Date today = new Date();
             newBookProgress.setLastRead(today);
         }
-        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked);
         Log.i(TAG, "Type of shelf to save to: " + shelf);
         String finalShelf = shelf;
+        if (newBookProgress.getWishlist()) {
+            getShelf(bookProgress, "Wishlist", true);
+        }
+        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked, false);
         newBookProgress.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {

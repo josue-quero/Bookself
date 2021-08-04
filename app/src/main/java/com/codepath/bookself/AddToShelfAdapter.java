@@ -111,6 +111,10 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                     if (userHasProgress || globalBook.getPageCount() == 0) {
                         if (heartHasChanged) {
                             updateBookProgress(globalBookProgress);
+                        } else if (globalBookProgress.getWishlist() && globalBook.getPageCount() != 0) {
+                            getPageInput(v);
+                        } else if (globalBookProgress.getWishlist() && globalBook.getPageCount() == 0) {
+                            createAndSaveProgress(globalBookProgress, globalBook, 0);
                         } else {
                             checkIfBookIsInShelf(globalBookProgress);
                         }
@@ -166,7 +170,11 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 String pagesContent = etCompose.getText().toString();
                 if (!pagesContent.isEmpty()) {
                     if (isNumeric(pagesContent) && Integer.parseInt(pagesContent) <= globalBook.getPageCount()) {
-                        checkIfBookInDatabase(globalBook, Integer.parseInt(pagesContent));
+                        if (globalBookProgress.getWishlist()) {
+                            createAndSaveProgress(globalBookProgress, globalBook, Integer.parseInt(pagesContent));
+                        } else {
+                            checkIfBookInDatabase(globalBook, Integer.parseInt(pagesContent));
+                        }
                         alertDialog.dismiss();
                     } else {
                         Toast.makeText(context, "Sorry, the amount of pages is invalid", Toast.LENGTH_LONG).show();
@@ -232,7 +240,7 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 // TODO: Get users current page if that page is higher than 0 add to Reading list
                 Log.i(TAG, "This book has been uploaded previously" + bookFound);
                 BooksParse retrievedBook = bookFound.get(0);
-                createAndSaveProgress(retrievedBook, pagesAmount);
+                createAndSaveProgress(new UsersBookProgress(), retrievedBook, pagesAmount);
 
             }
         });
@@ -248,13 +256,12 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
                 }
 
                 Log.i(TAG, "Done saving book");
-                createAndSaveProgress(book, pagesAmount);
+                createAndSaveProgress(new UsersBookProgress(), book, pagesAmount);
             }
         });
     }
 
-    private void createAndSaveProgress(BooksParse book, int page) {
-        UsersBookProgress newBookProgress = new UsersBookProgress();
+    private void createAndSaveProgress(UsersBookProgress newBookProgress, BooksParse book, int page) {
         String shelf = "";
         if (page != 0){
             if (page == book.getPageCount()) {
@@ -269,8 +276,11 @@ public class AddToShelfAdapter extends RecyclerView.Adapter<AddToShelfAdapter.Vi
             Date today = new Date();
             newBookProgress.setLastRead(today);
         }
-        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked);
         String finalShelf = shelf;
+        if (newBookProgress.getWishlist()) {
+            getShelf(newBookProgress, "Wishlist", true);
+        }
+        newBookProgress.setProgress(page, ParseUser.getCurrentUser(), book, isLiked, false);
         newBookProgress.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {

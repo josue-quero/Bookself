@@ -424,6 +424,7 @@ public class MyBooksFragment extends Fragment {
         query.include(UsersBookProgress.KEY_USER);
         query.include(UsersBookProgress.KEY_BOOK);
         query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.whereNotEqualTo("wishlist", true);
         // Limit query to latest 20 items
         query.setLimit(20);
         // Order posts by creation date (newest first)

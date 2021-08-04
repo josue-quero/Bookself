@@ -116,14 +116,17 @@ public class DetailsActivity extends AppCompatActivity {
         boolean fromMyLibrary = intent.getBooleanExtra("FromMyLibrary", false);
         // Getting book object
         if (fromMyLibrary) {
-            progressBar.setVisibility(View.VISIBLE);
-            tvProgress.setVisibility(View.VISIBLE);
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
             book = bookProgress.getBook();
-            double currentProgress = ((double) bookProgress.getCurrentPage()/(double) book.getPageCount()) * 100;
-            long newCurrentProgress = Math.round(currentProgress);
-            progressBar.setProgress((int) newCurrentProgress);
-            tvProgress.setText(String.valueOf(newCurrentProgress) + "%");
+            if (bookProgress.getCurrentPage() != 0) {
+                progressBar.setVisibility(View.VISIBLE);
+                tvProgress.setVisibility(View.VISIBLE);
+                double currentProgress = ((double) bookProgress.getCurrentPage() / (double) book.getPageCount()) * 100;
+                long newCurrentProgress = Math.round(currentProgress);
+                progressBar.setProgress((int) newCurrentProgress);
+                tvProgress.setText(String.valueOf(newCurrentProgress) + "%");
+            }
+            setAddAndReadButton(true);
             initialStateHeart = bookProgress.getHearted();
             lastStateHeart = initialStateHeart;
             if (bookProgress.getHearted()) {
@@ -131,7 +134,7 @@ public class DetailsActivity extends AppCompatActivity {
             }
             setMainView();
             setHeartButton();
-            setAddAndReadButton(true);
+
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
             checkBookProgressInDatabase();
@@ -241,16 +244,26 @@ public class DetailsActivity extends AppCompatActivity {
                     setMainView();
                     setAddAndReadButton(false);
                     return;
+                } else if (progress.get(0).getWishlist()) {
+                    bookProgress = progress.get(0);
+                    initialStateHeart = false;
+                    lastStateHeart = false;
+                    setMainView();
+                    setAddAndReadButton(true);
+                    return;
                 }
+
                 // Put the progress of this book
                 Log.i(TAG, "This book has progress" + progress);
                 bookProgress = progress.get(0);
-                double currentProgress = ((double) bookProgress.getCurrentPage()/(double) book.getPageCount()) * 100;
-                long newCurrentProgress = Math.round(currentProgress);
-                progressBar.setProgress((int) newCurrentProgress);
-                tvProgress.setText(String.valueOf(newCurrentProgress) + "%");
-                progressBar.setVisibility(View.VISIBLE);
-                tvProgress.setVisibility(View.VISIBLE);
+                if (bookProgress.getCurrentPage() != 0) {
+                    double currentProgress = ((double) bookProgress.getCurrentPage()/(double) book.getPageCount()) * 100;
+                    long newCurrentProgress = Math.round(currentProgress);
+                    progressBar.setProgress((int) newCurrentProgress);
+                    tvProgress.setText(String.valueOf(newCurrentProgress) + "%");
+                    progressBar.setVisibility(View.VISIBLE);
+                    tvProgress.setVisibility(View.VISIBLE);
+                }
                 initialStateHeart = bookProgress.getHearted();
                 lastStateHeart = initialStateHeart;
                 // Check if the book has been liked by the user
@@ -562,6 +575,10 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     private void updateBookProgress(UsersBookProgress bookProgress) {
+        if (bookProgress.getWishlist()) {
+            bookProgress.setWishlist(false);
+            getShelf(bookProgress, "Wishlist", true);
+        }
         bookProgress.saveInBackground();
         getShelf(bookProgress, "Favorites", !lastStateHeart);
         manageGoogleUpload(bookProgress.getBook());
@@ -597,7 +614,7 @@ public class DetailsActivity extends AppCompatActivity {
                     Date today = new Date();
                     newBookProgress.setLastRead(today);
                 }
-                newBookProgress.setProgress(pagesAmount, ParseUser.getCurrentUser(), retrievedBook, lastStateHeart);
+                newBookProgress.setProgress(pagesAmount, ParseUser.getCurrentUser(), retrievedBook, lastStateHeart, false);
                 saveProgress(newBookProgress);
 
             }
@@ -619,7 +636,7 @@ public class DetailsActivity extends AppCompatActivity {
                     Date today = new Date();
                     newBookProgress.setLastRead(today);
                 }
-                newBookProgress.setProgress(pagesAmount, ParseUser.getCurrentUser(), book, lastStateHeart);
+                newBookProgress.setProgress(pagesAmount, ParseUser.getCurrentUser(), book, lastStateHeart, false);
                 saveProgress(newBookProgress);
             }
         });
@@ -656,22 +673,6 @@ public class DetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void deleteBookFromFavorites(Shelves shelf, UsersBookProgress bookProgress) {
-        shelf.increment("amountBooks", -1);
-        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
-        relation.remove(bookProgress);
-        shelf.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e != null) {
-                    Log.i(TAG, "Problem saving shelf", e);
-                    return;
-                }
-                Log.i(TAG, "Done updating shelf");
-            }
-        });
-    }
-
     private void uploadBookInShelf(Shelves shelf, UsersBookProgress bookProgress, boolean delete) {
         ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
         if (delete) {
@@ -696,8 +697,10 @@ public class DetailsActivity extends AppCompatActivity {
 
     private void setAddAndReadButton(boolean bookHasProgress) {
         // Add this book to your library
-        if (bookHasProgress) {
-            ivAddToLibrary.setImageResource(R.drawable.green_filled_book_shelf);
+        if (bookHasProgress && !bookProgress.getWishlist()) {
+            if (!bookProgress.getWishlist()){
+                ivAddToLibrary.setImageResource(R.drawable.green_filled_book_shelf);
+            }
             if (book.getPageCount() != 0) {
                 String btnText = "";
                 if (bookProgress.getCurrentPage() == book.getPageCount()) {
@@ -730,8 +733,9 @@ public class DetailsActivity extends AppCompatActivity {
                 Intent i = new Intent(v.getContext(), AddToShelfActivity.class);
                 if (bookHasProgress) {
                     bookProgress.setHearted(lastStateHeart);
+                    Log.i(TAG, "Sending with progress");
                     if (initialStateHeart != lastStateHeart) {
-                        i.putExtra("heartHasChanged", lastStateHeart);
+                        i.putExtra("heartHasChanged", true);
                     }
                     i.putExtra(UsersBookProgress.class.getSimpleName(), Parcels.wrap(bookProgress));
                 } else {

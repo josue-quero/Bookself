@@ -14,7 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".ui.library.ResultsISBN"></activity>
-        <activity android:name=".ui.library.BarcodeResultsActivity" />
         <activity android:name=".AddToShelfActivity" />
 
         <provider

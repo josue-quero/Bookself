@@ -56,7 +56,6 @@ import java.util.Objects;
 public class DiscoverFragment extends Fragment {
 
     private static final String TAG = "DiscoverFragment";
-    private String tokenUrl = "https://oauth2.googleapis.com/token";
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerViewRecommended, recyclerViewPenguin, recyclerViewHachette, recyclerViewJava;

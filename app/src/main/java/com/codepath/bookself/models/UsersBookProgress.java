@@ -18,6 +18,7 @@ public class UsersBookProgress extends ParseObject {
     public static final String KEY_HEARTED = "hearted";
     public static final String KEY_LAST_READ = "lastRead";
     public static final String KEY_READ = "read";
+    public static final String KEY_WISHLIST = "wishlist";
 
     public UsersBookProgress() {
     }
@@ -59,11 +60,16 @@ public class UsersBookProgress extends ParseObject {
 
     public boolean getRead() { return getBoolean(KEY_READ); }
 
-    public void setProgress(int currentPage, ParseUser user, ParseObject book, boolean hearted) {
+    public boolean getWishlist() { return getBoolean(KEY_WISHLIST); }
+
+    public void setWishlist(boolean wishlist) { put(KEY_WISHLIST, wishlist); }
+
+    public void setProgress(int currentPage, ParseUser user, ParseObject book, boolean hearted, boolean wishlist) {
 
         put(KEY_CURRENT_PAGE, currentPage);
         put(KEY_USER, user);
         put(KEY_BOOK, book);
         put(KEY_HEARTED, hearted);
+        put(KEY_WISHLIST, wishlist);
     }
 }

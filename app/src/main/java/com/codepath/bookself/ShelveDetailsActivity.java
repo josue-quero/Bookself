@@ -59,7 +59,7 @@ public class ShelveDetailsActivity extends AppCompatActivity {
         GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(layoutManager);
         allProgresses = new ArrayList<>();
-        shelfBooksAdapter = new ShelfBooksAdapter(allProgresses, this);
+        shelfBooksAdapter = new ShelfBooksAdapter(allProgresses, this, shelf);
         recyclerView.setAdapter(shelfBooksAdapter);
         // Getting Shelve object
         int googleId = shelf.getGoogleId();

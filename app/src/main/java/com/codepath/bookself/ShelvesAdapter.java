@@ -18,10 +18,16 @@ import com.codepath.bookself.models.BooksParse;
 import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
 import com.codepath.bookself.ui.library.ShelvesFragment;
+import com.parse.CountCallback;
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseQuery;
+import com.parse.ParseRelation;
 
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
 
@@ -96,8 +102,24 @@ public class ShelvesAdapter extends RecyclerView.Adapter<ShelvesAdapter.ViewHold
         public void bind(Shelves shelf) {
             if (shelf != null) {
                 tvNameShelf.setText(shelf.getNameShelf());
-                tvAmountBooks.setText(String.valueOf(shelf.getAmountBooks()));
-                ivIcon.setVisibility(View.VISIBLE);
+                // save received posts to list and notify adapter of new data
+                ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
+                ParseQuery<UsersBookProgress> query = relation.getQuery();
+                query.include(UsersBookProgress.KEY_BOOK);
+                query.include(UsersBookProgress.KEY_USER);
+                query.addDescendingOrder("updatedAt");
+
+                query.countInBackground(new CountCallback() {
+                    @Override
+                    public void done(int count, ParseException e) {
+                        if (e != null) {
+                            Log.e("ShelvesAdapter", "Error counting: ", e);
+                            return;
+                        }
+                        tvAmountBooks.setText(String.valueOf(count));
+                        ivIcon.setVisibility(View.VISIBLE);
+                    }
+                });
             } else {
                 ivIcon.setVisibility(View.GONE);
                 tvNameShelf.setText("");

@@ -39,6 +39,7 @@ import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.codepath.bookself.BitmapScaler;
 import com.codepath.bookself.BuildConfig;
+
 import com.codepath.bookself.MyBooksAdapter;
 import com.codepath.bookself.R;
 import com.codepath.bookself.SearchActivity;
@@ -80,7 +81,7 @@ public class MyBooksFragment extends Fragment {
     private static final String TAG = "MyBooksFragment";
     private RecyclerView recyclerView;
     private boolean justCreated;
-    private ShelfBooksAdapter shelfBooksAdapter;
+    private MyBooksAdapter shelfBooksAdapter;
     private SpeedDialView spd;
     private File photoFile;
     private ImageView ivPostImage;
@@ -130,7 +131,7 @@ public class MyBooksFragment extends Fragment {
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         recyclerView.setLayoutManager(layoutManager);
         allProgresses = new ArrayList<>();
-        shelfBooksAdapter = new ShelfBooksAdapter(allProgresses, getContext());
+        shelfBooksAdapter = new MyBooksAdapter(allProgresses, getContext());
         recyclerView.setAdapter(shelfBooksAdapter);
         // Getting all the books that belong to the user
         getUserBooks();

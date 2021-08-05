@@ -20,7 +20,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.codepath.bookself.MyBooksAdapter;
 import com.codepath.bookself.ProfileAdapter;
 import com.codepath.bookself.R;
 import com.codepath.bookself.models.BooksParse;

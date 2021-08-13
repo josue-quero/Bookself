@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -18,6 +20,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,6 +47,7 @@ import com.parse.ParseQuery;
 import com.parse.ParseRelation;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
+import com.victor.loading.book.BookLoading;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,21 +67,25 @@ public class DetailsActivity extends AppCompatActivity {
     // creating variables for strings,text view, image views and button.
     String title, subtitle, publisher, publishedDate, description, thumbnail, previewLink, infoLink, buyLink;
     int pageCount;
-    private ArrayList<String> authors;
     public static final String TAG = "DetailsActivity";
     private String tokenUrl = "https://oauth2.googleapis.com/token";
     private final String clientId = "562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com";
 
-    private TextView titleTV, tvGenres, publisherTV, descTV, pageTV, publishDateTV, tvProgress, tvAuthors;
+    private TextView titleTV, tvGenres, publisherTV, descTV, pageTV, publishDateTV, tvProgress, tvAuthors, tvSuggestionTitle;
+    private RecyclerView rvSuggestions;
     private Button previewBtn, buyBtn, btnRead;
     private ImageView bookIV, ivHeart, ivAddToLibrary;
+    private ScrollView svDetailsPage;
     private EditText etCompose;
     private BooksParse book;
+    private BookLoading bookLoading;
+    private ArrayList<BooksParse> suggestedBooks;
     private boolean gettingOut = true, initialStateHeart, lastStateHeart;
     private UsersBookProgress bookProgress;
     private ProgressBar progressBar;
     private RequestQueue mRequestQueue;
-    GoogleSignInClient mGoogleSignInClient;
+    private DiscoverOtherBooksAdapter suggestionsAdapter;
+    private GoogleSignInClient mGoogleSignInClient;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -95,6 +103,8 @@ public class DetailsActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         tvProgress = findViewById(R.id.tvProgress);
         ivAddToLibrary = findViewById(R.id.ivAddToLibrary);
+        bookLoading = findViewById(R.id.bookloading);
+        bookLoading.start();
         // initializing our views..
         titleTV = findViewById(R.id.idTVTitle);
         tvAuthors = findViewById(R.id.tvAuthors);
@@ -108,7 +118,14 @@ public class DetailsActivity extends AppCompatActivity {
         ivHeart = findViewById(R.id.ivHeart);
         tvGenres = findViewById(R.id.tvGenresText);
         btnRead = findViewById(R.id.btnRead);
+        rvSuggestions = findViewById(R.id.rvSuggestions);
+        tvSuggestionTitle = findViewById(R.id.tvSuggestionsTitle);
+        progressBar = findViewById(R.id.progressBar);
+        tvProgress = findViewById(R.id.tvProgress);
+        svDetailsPage = findViewById(R.id.svDetailsPage);
+        // Setting view to GONE
         btnRead.setVisibility(View.GONE);
+        svDetailsPage.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
         tvProgress.setVisibility(View.GONE);
         // Checking if there is progress available
@@ -119,12 +136,12 @@ public class DetailsActivity extends AppCompatActivity {
             bookProgress = (UsersBookProgress) Parcels.unwrap(getIntent().getParcelableExtra(UsersBookProgress.class.getSimpleName()));
             book = bookProgress.getBook();
             if (bookProgress.getCurrentPage() != 0) {
-                progressBar.setVisibility(View.VISIBLE);
-                tvProgress.setVisibility(View.VISIBLE);
                 double currentProgress = ((double) bookProgress.getCurrentPage() / (double) book.getPageCount()) * 100;
                 long newCurrentProgress = Math.round(currentProgress);
                 progressBar.setProgress((int) newCurrentProgress);
                 tvProgress.setText(String.valueOf(newCurrentProgress) + "%");
+                progressBar.setVisibility(View.VISIBLE);
+                tvProgress.setVisibility(View.VISIBLE);
             }
             setAddAndReadButton(true);
             initialStateHeart = bookProgress.getHearted();
@@ -139,10 +156,236 @@ public class DetailsActivity extends AppCompatActivity {
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
             checkBookProgressInDatabase();
         }
+        // Setting the adapters with empty arraylists
+        LinearLayoutManager layoutManagerRecommended = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        rvSuggestions.setLayoutManager(layoutManagerRecommended);
+        suggestedBooks = new ArrayList<>();
+        suggestionsAdapter = new DiscoverOtherBooksAdapter(suggestedBooks, this);
+        rvSuggestions.setAdapter(suggestionsAdapter);
+        if (!book.getAuthors().isEmpty()){
+            tvSuggestionTitle.setText("More of " + book.getAuthors().get(0));
+            getRelatedBooks("inauthor:" + book.getAuthors().get(0), "");
+            //getAuthorLink();
+        }
+    }
+
+    /*
+    private void getAuthorLink() {
+        suggestedBooks = new ArrayList<>();
+
+        // below line is use to initialize
+        // the variable for our request queue.
+        mRequestQueue = Volley.newRequestQueue(DetailsActivity.this);
+
+        // below line is use to clear cache this
+        // will be use when our data is being updated.
+        mRequestQueue.getCache().clear();
+
+        // below is the url for getting data from API in json format.
+        String url = "https://openlibrary.org/api/books?bibkeys=ISBN:" + query + "&maxResults=40" + parameter + "&key=" + BuildConfig.BOOKS_KEY;
+
+        Log.i(TAG, "This is the line: " + url);
+
+        // below line we are  creating a new request queue.
+        RequestQueue queue = Volley.newRequestQueue(DetailsActivity.this);
+
+
+        // below line is use to make json object request inside that we
+        // are passing url, get method and getting json object. .
+        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                //progressBar.setVisibility(View.GONE);
+                // inside on response method we are extracting all our json data.
+                try {
+                    JSONArray itemsArray = response.getJSONArray("items");
+                    Log.i(TAG, "Response: " + response);
+                    for (int i = 0; i < itemsArray.length(); i++) {
+                        JSONArray authorsArray = new JSONArray();
+                        JSONArray categoriesArray = new JSONArray();
+                        String thumbnail = "";
+                        String buyLink = "";
+                        JSONObject itemsObj = itemsArray.getJSONObject(i);
+                        String googleId = itemsObj.optString("id");
+                        JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
+                        String title = volumeObj.optString("title");
+                        String subtitle = volumeObj.optString("subtitle");
+                        try {
+                            authorsArray = volumeObj.getJSONArray("authors");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No author", e);
+                        }
+                        try {
+                            categoriesArray = volumeObj.getJSONArray("categories");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No categories");
+                        }
+                        String publisher = volumeObj.optString("publisher");
+                        String publishedDate = volumeObj.optString("publishedDate");
+                        String description = volumeObj.optString("description");
+                        int pageCount = volumeObj.optInt("pageCount");
+                        JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
+                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
+                        if (imageLinks != null) {
+                            thumbnail = imageLinks.optString("thumbnail");
+                        }
+                        if (saleInfoObj != null) {
+                            buyLink = saleInfoObj.optString("buyLink");
+                        }
+                        String previewLink = volumeObj.optString("previewLink");
+                        String infoLink = volumeObj.optString("infoLink");
+                        ArrayList<String> authorsArrayList = new ArrayList<>();
+                        if (authorsArray.length() != 0) {
+                            for (int j = 0; j < authorsArray.length(); j++) {
+                                authorsArrayList.add(authorsArray.optString(j));
+                            }
+                        }
+                        ArrayList<String> categoriesArrayList = new ArrayList<>();
+                        if (categoriesArray.length() != 0) {
+                            for (int x = 0; x < categoriesArray.length(); x++) {
+                                categoriesArrayList.add(categoriesArray.optString(x));
+                            }
+                        }
+                        // after extracting all the data we are
+                        // saving this data in our modal class.
+                        BooksParse bookInfo = new BooksParse();
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId, categoriesArrayList);
+
+                        // below line is use to pass our modal
+                        // class in our array list.
+                        suggestedBooks.add(bookInfo);
+                    }
+                    suggestionsAdapter.updateAdapter(suggestedBooks);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    // displaying a toast message when we get any error from API
+                    Toast.makeText(DetailsActivity.this, "No Data Found" + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // also displaying error message in toast.
+                Toast.makeText(DetailsActivity.this, "Error found is " + error, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error found is: " + error);
+            }
+        });
+        // at last we are adding our json object
+        // request in our request queue.
+        queue.add(booksObjrequest);
+    }*/
+
+    private void getRelatedBooks(String query, String parameter) {
+        suggestedBooks = new ArrayList<>();
+
+        // below line is use to initialize
+        // the variable for our request queue.
+        mRequestQueue = Volley.newRequestQueue(DetailsActivity.this);
+
+        // below line is use to clear cache this
+        // will be use when our data is being updated.
+        mRequestQueue.getCache().clear();
+
+        // below is the url for getting data from API in json format.
+        String url = "https://www.googleapis.com/books/v1/volumes?q=" + query + "&maxResults=40" + parameter + "&key=" + BuildConfig.BOOKS_KEY;
+
+        Log.i(TAG, "This is the line: " + url);
+
+        // below line we are  creating a new request queue.
+        RequestQueue queue = Volley.newRequestQueue(DetailsActivity.this);
+
+
+        // below line is use to make json object request inside that we
+        // are passing url, get method and getting json object. .
+        JsonObjectRequest booksObjrequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                //progressBar.setVisibility(View.GONE);
+                // inside on response method we are extracting all our json data.
+                try {
+                    JSONArray itemsArray = response.getJSONArray("items");
+                    Log.i(TAG, "Response: " + response);
+                    for (int i = 0; i < itemsArray.length(); i++) {
+                        JSONArray authorsArray = new JSONArray();
+                        JSONArray categoriesArray = new JSONArray();
+                        String thumbnail = "";
+                        String buyLink = "";
+                        JSONObject itemsObj = itemsArray.getJSONObject(i);
+                        String googleId = itemsObj.optString("id");
+                        JSONObject volumeObj = itemsObj.getJSONObject("volumeInfo");
+                        String title = volumeObj.optString("title");
+                        String subtitle = volumeObj.optString("subtitle");
+                        try {
+                            authorsArray = volumeObj.getJSONArray("authors");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No author", e);
+                        }
+                        try {
+                            categoriesArray = volumeObj.getJSONArray("categories");
+                        } catch (JSONException e) {
+                            Log.i(TAG, "No categories");
+                        }
+                        String publisher = volumeObj.optString("publisher");
+                        String publishedDate = volumeObj.optString("publishedDate");
+                        String description = volumeObj.optString("description");
+                        int pageCount = volumeObj.optInt("pageCount");
+                        JSONObject imageLinks = volumeObj.optJSONObject("imageLinks");
+                        JSONObject saleInfoObj = itemsObj.optJSONObject("saleInfo");
+                        if (imageLinks != null) {
+                            thumbnail = imageLinks.optString("thumbnail");
+                        }
+                        if (saleInfoObj != null) {
+                            buyLink = saleInfoObj.optString("buyLink");
+                        }
+                        String previewLink = volumeObj.optString("previewLink");
+                        String infoLink = volumeObj.optString("infoLink");
+                        ArrayList<String> authorsArrayList = new ArrayList<>();
+                        if (authorsArray.length() != 0) {
+                            for (int j = 0; j < authorsArray.length(); j++) {
+                                authorsArrayList.add(authorsArray.optString(j));
+                            }
+                        }
+                        ArrayList<String> categoriesArrayList = new ArrayList<>();
+                        if (categoriesArray.length() != 0) {
+                            for (int x = 0; x < categoriesArray.length(); x++) {
+                                categoriesArrayList.add(categoriesArray.optString(x));
+                            }
+                        }
+                        // after extracting all the data we are
+                        // saving this data in our modal class.
+                        BooksParse bookInfo = new BooksParse();
+                        bookInfo.setBook(title, subtitle, authorsArrayList, publisher, publishedDate, description, pageCount, thumbnail, previewLink, infoLink, buyLink, googleId, categoriesArrayList);
+
+                        // below line is use to pass our modal
+                        // class in our array list.
+                        suggestedBooks.add(bookInfo);
+                    }
+                    suggestionsAdapter.updateAdapter(suggestedBooks);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    // displaying a toast message when we get any error from API
+                    Toast.makeText(DetailsActivity.this, "No Data Found" + e, Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // also displaying error message in toast.
+                Toast.makeText(DetailsActivity.this, "Error found is " + error, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error found is: " + error);
+            }
+        });
+        // at last we are adding our json object
+        // request in our request queue.
+        queue.add(booksObjrequest);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void setMainView() {
+        bookLoading.setVisibility(View.GONE);
+        bookLoading.stop();
+        svDetailsPage.setVisibility(View.VISIBLE);
+
         // getting the data which we have passed from our adapter class.
         title = book.getTitle();
         subtitle = book.getSubtitle();
@@ -700,9 +943,7 @@ public class DetailsActivity extends AppCompatActivity {
     private void setAddAndReadButton(boolean bookHasProgress) {
         // Add this book to your library
         if (bookHasProgress && !bookProgress.getWishlist()) {
-            if (!bookProgress.getWishlist()){
-                ivAddToLibrary.setImageResource(R.drawable.green_filled_book_shelf);
-            }
+            ivAddToLibrary.setImageResource(R.drawable.green_filled_book_shelf);
             if (book.getPageCount() != 0) {
                 String btnText = "";
                 if (bookProgress.getCurrentPage() == book.getPageCount()) {
@@ -755,6 +996,7 @@ public class DetailsActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = LayoutInflater.from(this).inflate(R.layout.pages_progress_dialog, null, false);;
         etCompose = view.findViewById(R.id.etPagesAmount);
+        etCompose.setText(String.valueOf(bookProgress.getCurrentPage()));
         builder.setView(view)
                 .setPositiveButton(R.string.create, new DialogInterface.OnClickListener() {
                     @Override

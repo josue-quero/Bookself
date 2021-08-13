@@ -28,6 +28,7 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseRelation;
 import com.parse.ParseUser;
+import com.victor.loading.book.BookLoading;
 
 import org.parceler.Parcels;
 
@@ -41,8 +42,21 @@ public class ShelveDetailsActivity extends AppCompatActivity {
     private Shelves shelf;
     public static final String TAG = "ShelveDetailsActivity";
     private RecyclerView recyclerView;
+    private BookLoading bookLoading;
+    private boolean firstTime;
     ShelfBooksAdapter shelfBooksAdapter;
     ArrayList<UsersBookProgress> allProgresses;
+
+    @Override
+    protected void onResume() {
+        if (!firstTime){
+            allProgresses.clear();
+            shelfBooksAdapter.updateAdapter(allProgresses);
+            getParseShelf();
+        }
+        firstTime = false;
+        super.onResume();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +64,15 @@ public class ShelveDetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_shelve_details);
 
 
+        firstTime = true;
         shelf = (Shelves) Parcels.unwrap(getIntent().getParcelableExtra(Shelves.class.getSimpleName()));
         androidx.appcompat.widget.Toolbar mActionBarToolbar = (androidx.appcompat.widget.Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mActionBarToolbar);
         Objects.requireNonNull(getSupportActionBar()).setTitle(shelf.getNameShelf());
 
+        // Finding and starting the loading icon
+        bookLoading = findViewById(R.id.bookloading);
+        bookLoading.start();
         recyclerView = findViewById(R.id.rvShelfBooks);
         GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(layoutManager);
@@ -123,6 +141,8 @@ public class ShelveDetailsActivity extends AppCompatActivity {
                 }
                 allProgresses.addAll(objects);
                 shelfBooksAdapter.updateAdapter(allProgresses);
+                bookLoading.setVisibility(View.GONE);
+                bookLoading.stop();
             }
         });
     }

@@ -13,6 +13,7 @@ import android.provider.SearchRecentSuggestions;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Adapter;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.codepath.bookself.models.BooksParse;
 import com.parse.ParseUser;
+import com.victor.loading.book.BookLoading;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,6 +40,7 @@ public class SearchActivity extends AppCompatActivity {
     private ArrayList<BooksParse> bookList;
     private SearchAdapter adapter;
     private RequestQueue mRequestQueue;
+    private BookLoading bookLoading;
     public static final String TAG = "SearchActivity";
     RecyclerView recyclerView;
 
@@ -57,6 +60,11 @@ public class SearchActivity extends AppCompatActivity {
         // Configure the recycler view: layout manager and adapter
         adapter = new SearchAdapter(bookList, this);
         recyclerView.setAdapter(adapter);
+
+        // Finding and starting the loading icon
+        bookLoading = findViewById(R.id.bookloading);
+        bookLoading.start();
+
         // Get the intent, verify the action and get the query
         String newQuery;
         String parameter;
@@ -162,6 +170,8 @@ public class SearchActivity extends AppCompatActivity {
                         // class in our array list.
                         bookList.add(bookInfo);
                     }
+                    bookLoading.setVisibility(View.GONE);
+                    bookLoading.stop();
                     adapter.updateAdapter(bookList);
                 } catch (JSONException e) {
                     e.printStackTrace();

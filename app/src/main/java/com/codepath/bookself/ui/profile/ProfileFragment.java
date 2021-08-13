@@ -34,6 +34,7 @@ import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseRelation;
 import com.parse.ParseUser;
+import com.victor.loading.book.BookLoading;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,7 @@ public class ProfileFragment extends Fragment {
     ProfileAdapter profileAdapter;
     ArrayList<UsersBookProgress> allProgresses;
     ImageView ivProfilePicture;
+    private BookLoading bookLoading;
     TextView tvPagesAmount, tvBooksAmount, tvGoalPercentage, tvUsersName;
 
     public ProfileFragment() {
@@ -74,6 +76,10 @@ public class ProfileFragment extends Fragment {
         allProgresses = new ArrayList<>();
         profileAdapter = new ProfileAdapter(allProgresses, getContext());
         recyclerView.setAdapter(profileAdapter);
+
+        // Finding and starting the loading icon
+        bookLoading = view.findViewById(R.id.bookloading);
+        bookLoading.start();
 
         // Hiding the toolbar
         ((AppCompatActivity)getActivity()).getSupportActionBar().hide();
@@ -156,6 +162,8 @@ public class ProfileFragment extends Fragment {
                         }
                         allProgresses.addAll(objects);
                         profileAdapter.updateAdapter(allProgresses);
+                        bookLoading.setVisibility(View.GONE);
+                        bookLoading.stop();
                     }
                 });
             }

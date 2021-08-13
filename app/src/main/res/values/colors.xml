@@ -25,4 +25,8 @@
 
     <color name="iconColor">#145798</color>
 
+    <color name="book_loading_background">#ffffff</color>
+    <color name="book_loading_book">#5DB075</color>
+    <color name="book_loading_page">#ffffff</color>
+
 </resources>

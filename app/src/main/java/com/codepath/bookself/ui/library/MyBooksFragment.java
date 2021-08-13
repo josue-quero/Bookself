@@ -1,5 +1,6 @@
 package com.codepath.bookself.ui.library;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -49,7 +50,6 @@ import com.codepath.bookself.models.UsersBookProgress;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.mlkit.vision.barcode.Barcode;
 import com.google.mlkit.vision.barcode.BarcodeScanner;
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
@@ -62,6 +62,7 @@ import com.parse.ParseException;
 import com.parse.ParseFile;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
+import com.victor.loading.book.BookLoading;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -84,7 +85,8 @@ public class MyBooksFragment extends Fragment {
     private MyBooksAdapter shelfBooksAdapter;
     private SpeedDialView spd;
     private File photoFile;
-    private ImageView ivPostImage;
+    private BookLoading bookLoading;
+    private ProgressDialog dialog;
     private String photoFileName = "barCodePhoto.jpg";
     public static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 42;
     public final static int PICK_PHOTO_CODE = 1046;
@@ -133,10 +135,14 @@ public class MyBooksFragment extends Fragment {
         allProgresses = new ArrayList<>();
         shelfBooksAdapter = new MyBooksAdapter(allProgresses, getContext());
         recyclerView.setAdapter(shelfBooksAdapter);
+        // Finding and starting the loading icon
+        bookLoading = view.findViewById(R.id.bookloading);
+        bookLoading.start();
+        spd = view.findViewById(R.id.speedDial);
+        spd.setVisibility(View.GONE);
         // Getting all the books that belong to the user
         getUserBooks();
 
-        spd = view.findViewById(R.id.speedDial);
         spd.addActionItem(new SpeedDialActionItem.Builder(R.id.fab_action1, R.drawable.ic_barcode)
                 .setLabel("Barcode")
                 .setTheme(R.style.AppTheme_Purple)
@@ -207,6 +213,7 @@ public class MyBooksFragment extends Fragment {
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 // by this point we have the camera photo on disk
+                dialog = ProgressDialog.show(requireContext(), "", "Analyzing picture...", true);
                 Uri takenImage = Uri.fromFile(photoFile);
                 BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
                         .setBarcodeFormats(
@@ -236,12 +243,13 @@ public class MyBooksFragment extends Fragment {
                             .addOnFailureListener(new OnFailureListener() {
                                 @Override
                                 public void onFailure(@NonNull Exception e) {
-                                    Log.e(TAG, "Error at detecting ISBN: ", e);
-                                    Log.i(TAG, "Error at detection ISBN " + e);
+                                    dialog.dismiss();
+                                    Toast.makeText(getContext(), "Unable to find barcodes", Toast.LENGTH_SHORT).show();
                                 }
                             });
                 } catch (IOException e) {
                     e.printStackTrace();
+                    dialog.dismiss();
                     Log.i(TAG, "Exception at detection ISBN " + e);
                 }
             } else { // Result was a failure
@@ -249,6 +257,7 @@ public class MyBooksFragment extends Fragment {
             }
         }
         if ((data != null) && requestCode == PICK_PHOTO_CODE && resultCode == RESULT_OK) {
+            dialog = ProgressDialog.show(requireContext(), "", "Analyzing picture...", true);
             BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
                     .setBarcodeFormats(
                             Barcode.FORMAT_EAN_8,
@@ -278,6 +287,8 @@ public class MyBooksFragment extends Fragment {
                         .addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
+                                dialog.dismiss();
+                                Toast.makeText(getContext(), "Unable to find barcodes", Toast.LENGTH_SHORT).show();
                                 Log.e(TAG, "Error at detecting ISBN: ", e);
                                 Log.i(TAG, "Error at detection ISBN " + e);
                             }
@@ -378,6 +389,7 @@ public class MyBooksFragment extends Fragment {
                     if ((barcodePlace + 1) == barcodesAmount) {
                         Bundle b = new Bundle();
                         b.putParcelableArrayList("Books", resultBooks);
+                        dialog.dismiss();
                         Intent i = new Intent(getContext(), ResultsISBN.class);
                         i.putExtras(b);
                         startActivity(i);
@@ -392,6 +404,7 @@ public class MyBooksFragment extends Fragment {
             @Override
             public void onErrorResponse(VolleyError error) {
                 // also displaying error message in toast.
+                dialog.dismiss();
                 Toast.makeText(getContext(), "Error found is " + error, Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Error found is: " + error);
             }
@@ -442,6 +455,8 @@ public class MyBooksFragment extends Fragment {
 
                 // Save received posts to list and notify adapter of new data
                 Log.i(TAG, "Comparing usersBookProgress" + posts);
+                bookLoading.setVisibility(View.GONE);
+                bookLoading.stop();
                 allProgresses.clear();
                 allProgresses.addAll(posts);
                 shelfBooksAdapter.updateAdapter(allProgresses);

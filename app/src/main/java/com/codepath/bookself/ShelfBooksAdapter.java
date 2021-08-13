@@ -103,7 +103,6 @@ public class ShelfBooksAdapter extends RecyclerView.Adapter<ShelfBooksAdapter.Vi
                     }
                     materialCardView.setChecked(!materialCardView.isChecked());
                     mActionMode.setTitle("Books selected: " + selectedList.size());
-                    mActionMode.setSubtitle("Indexes: " + selectedList);
                     return true;
                 }
             });
@@ -135,7 +134,6 @@ public class ShelfBooksAdapter extends RecyclerView.Adapter<ShelfBooksAdapter.Vi
                 }
                 materialCardView.setChecked(!materialCardView.isChecked());
                 mActionMode.setTitle("Books selected: " + selectedList.size());
-                mActionMode.setSubtitle("Indexes: " + selectedList);
             }
         }
 
@@ -149,6 +147,8 @@ public class ShelfBooksAdapter extends RecyclerView.Adapter<ShelfBooksAdapter.Vi
                 //Log.i("Something", "Link: " + httpsLink);
                 Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
                 //Log.i("Something", "Animation: on");
+            } else {
+                Glide.with(context).load(R.drawable.book_cover_placeholder).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().into(ivBookImage);
             }
         }
 
@@ -186,7 +186,6 @@ public class ShelfBooksAdapter extends RecyclerView.Adapter<ShelfBooksAdapter.Vi
 
             private void destroySelection() {
                 contextualMode = false;
-                materialCardView.setChecked(!materialCardView.isChecked());
                 for (int i = 0; i < selectedCardViews.size(); i++) {
                     selectedCardViews.get(i).setChecked(false);
                 }
@@ -200,7 +199,7 @@ public class ShelfBooksAdapter extends RecyclerView.Adapter<ShelfBooksAdapter.Vi
                     uploadBookInShelf(shelf, bookProgress, true);
                     progressesList.remove(bookProgress);
                 }
-                onDestroyActionMode(mode);
+                destroySelection();
                 mode.finish();
                 notifyDataSetChanged();
             }

@@ -9,6 +9,7 @@ import androidx.fragment.app.FragmentManager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.SearchRecentSuggestions;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -137,6 +138,9 @@ public class MainActivity extends AppCompatActivity {
 
     // Loging out the current user (Google and Parse)
     public void logOut() {
+        SearchRecentSuggestions suggestions = new SearchRecentSuggestions(this,
+                SuggestionProvider.AUTHORITY, SuggestionProvider.MODE);
+        suggestions.clearHistory();
         mGoogleSignInClient.signOut()
                 .addOnCompleteListener(this, new OnCompleteListener<Void>() {
                     @Override

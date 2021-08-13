@@ -102,24 +102,8 @@ public class ShelvesAdapter extends RecyclerView.Adapter<ShelvesAdapter.ViewHold
         public void bind(Shelves shelf) {
             if (shelf != null) {
                 tvNameShelf.setText(shelf.getNameShelf());
-                // save received posts to list and notify adapter of new data
-                ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
-                ParseQuery<UsersBookProgress> query = relation.getQuery();
-                query.include(UsersBookProgress.KEY_BOOK);
-                query.include(UsersBookProgress.KEY_USER);
-                query.addDescendingOrder("updatedAt");
-
-                query.countInBackground(new CountCallback() {
-                    @Override
-                    public void done(int count, ParseException e) {
-                        if (e != null) {
-                            Log.e("ShelvesAdapter", "Error counting: ", e);
-                            return;
-                        }
-                        tvAmountBooks.setText(String.valueOf(count));
-                        ivIcon.setVisibility(View.VISIBLE);
-                    }
-                });
+                tvAmountBooks.setText(String.valueOf(shelf.getAmountBooks()));
+                ivIcon.setVisibility(View.VISIBLE);
             } else {
                 ivIcon.setVisibility(View.GONE);
                 tvNameShelf.setText("");

@@ -144,8 +144,6 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
         }
 
         public void bind(BooksParse book, int position) {
-            //TODO: Put placeholder image for when a book has no image
-            tvBookTitle.setText(book.getTitle());
             Animation fallInAnimation = AnimationUtils.loadAnimation(context, R.anim.fall_down_animation);
             rvContainer.clearAnimation();
             String httpLink = book.getThumbnail();
@@ -162,6 +160,7 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
                         Log.i("Something", "Last animated: " + lastPosition + "Position: " + position);
                         if (position > lastPosition) {
                             Log.i("Something", "Animated " + position);
+                            tvBookTitle.setText(book.getTitle());
                             rvContainer.setAnimation(fallInAnimation);
                             lastPosition = position;
                         }
@@ -169,6 +168,8 @@ public class DiscoverAdapter extends RecyclerView.Adapter<DiscoverAdapter.Discov
                     }
                 }).into(ivBookImage);
             } else {
+                Glide.with(context).load(R.drawable.book_cover_placeholder).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().into(ivBookImage);
+                tvBookTitle.setText(book.getTitle());
                 rvContainer.setAnimation(fallInAnimation);
             }
         }

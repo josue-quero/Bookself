@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,291 +9,325 @@
     tools:context=".DetailsActivity"
     android:transitionName="bookTransition">
 
-    <LinearLayout
+    <com.victor.loading.book.BookLoading
+        android:id="@+id/bookloading"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center" />
+
+    <ScrollView
+        android:id="@+id/svDetailsPage"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".DetailsActivity">
 
-        <RelativeLayout
-            android:id="@+id/rvPicture"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!--Image view for displaying our book image-->
-            <FrameLayout
-                android:id="@+id/flBook"
-                android:layout_width="220dp"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_marginBottom="0dp"
-                android:padding="10dp">
+            <RelativeLayout
+                android:id="@+id/rvPicture"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-                <ImageView
-                    android:id="@+id/idIVbook"
+                <!--Image view for displaying our book image-->
+                <FrameLayout
+                    android:id="@+id/flBook"
+                    android:layout_width="220dp"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginBottom="0dp"
+                    android:padding="10dp">
+
+                    <ImageView
+                        android:id="@+id/idIVbook"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/lyButtons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:layout_below="@id/flBook"
+                    android:layout_centerHorizontal="true"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivAddToLibrary"
+                        android:layout_width="40dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:layout_weight="1"
+                        app:srcCompat="@drawable/plus_book_shelf" />
+
+                    <ImageView
+                        android:id="@+id/ivHeart"
+                        android:layout_width="40dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="0dp"
+                        app:srcCompat="@drawable/unfilled_heart" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/lyTitles"
                     android:layout_width="match_parent"
-                    android:layout_height="220dp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:adjustViewBounds="true"
-                    android:scaleType="fitCenter" />
-            </FrameLayout>
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/lyButtons"
+                    android:layout_marginTop="0dp"
+                    android:orientation="vertical">
+
+                    <!--Text view for displaying book publisher-->
+                    <TextView
+                        android:id="@+id/idTVTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="4dp"
+                        android:text="title"
+                        android:textAlignment="center"
+                        android:textColor="@color/black"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+
+                    <!--text view for displaying number of pages of book-->
+
+                    <!--text view for displaying book publish date-->
+                    <TextView
+                        android:id="@+id/tvAuthors"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="4dp"
+                        android:text="subtitle"
+                        android:textAlignment="center"
+                        android:textColor="@color/black"
+                        android:textSize="20sp" />
+
+                </LinearLayout>
+
+            </RelativeLayout>
 
             <LinearLayout
-                android:id="@+id/lyButtons"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                android:layout_below="@id/flBook"
-                android:layout_centerHorizontal="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
                 android:orientation="horizontal">
 
-                <ImageView
-                    android:id="@+id/ivAddToLibrary"
-                    android:layout_width="40dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
-                    android:layout_weight="1"
-                    app:srcCompat="@drawable/plus_book_shelf" />
+                <!--button for displaying book preview-->
 
-                <ImageView
-                    android:id="@+id/ivHeart"
-                    android:layout_width="40dp"
+                <!--button for opening buying page of the book-->
+                <Button
+                    android:id="@+id/idBtnPreview"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:layout_weight="1"
+                    android:text="Preview"
+                    android:textAllCaps="true"
+                    tools:ignore="NestedWeights" />
+
+                <Button
+                    android:id="@+id/idBtnBuy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:layout_weight="1"
+                    android:text="Buy"
+                    android:textAllCaps="true" />
+
+
+            </LinearLayout>
+
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/btnRead"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:textAlignment="center"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"></com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal">
+
+                <TextView
+                    android:id="@+id/tvProgress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    app:layout_constraintBottom_toBottomOf="@+id/progressBar"
+                    app:layout_constraintEnd_toEndOf="@id/progressBar"
+                    app:layout_constraintStart_toStartOf="@id/progressBar"
+                    app:layout_constraintTop_toTopOf="@id/progressBar"
+                    tools:text="0%" />
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:indeterminateOnly="false"
+                    android:progressDrawable="@drawable/book_progress"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:layout_gravity="center_horizontal"
+                    tools:progress="0" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <TextView
+                android:id="@+id/idTVDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:padding="4dp"
+                android:text="description"
+                android:textColor="@color/black"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/idTVpublisher"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:padding="4dp"
+                android:text="Publisher"
+                android:textColor="@color/black"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/llTitles"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/idTVPublishDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Published Date"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    android:textSize="12sp" />
+
+                <View
+                    android:layout_width="1dp"
                     android:layout_height="match_parent"
-                    android:layout_marginTop="0dp"
-                    app:srcCompat="@drawable/unfilled_heart" />
+                    android:background="@color/black" />
+
+                <TextView
+                    android:id="@+id/idTVNoOfPages"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Number of pages"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    android:textSize="12sp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/black" />
+
+                <TextView
+                    android:id="@+id/tvGenres"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Genres"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/lyTitles"
+                android:id="@+id/llContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/lyButtons"
                 android:layout_marginTop="0dp"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:orientation="horizontal">
 
-                <!--Text view for displaying book publisher-->
                 <TextView
-                    android:id="@+id/idTVTitle"
+                    android:id="@+id/tvPublishDateText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="title"
+                    android:layout_weight="1"
+                    android:paddingTop="5dp"
+                    android:text="Published Date"
                     android:textAlignment="center"
                     android:textColor="@color/black"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+                    android:textSize="12sp" />
 
-                <!--text view for displaying number of pages of book-->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/black" />
 
-                <!--text view for displaying book publish date-->
                 <TextView
-                    android:id="@+id/tvAuthors"
+                    android:id="@+id/tvNoOfPagesText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="subtitle"
+                    android:layout_weight="1"
+                    android:text="Number of pages"
                     android:textAlignment="center"
                     android:textColor="@color/black"
-                    android:textSize="20sp" />
+                    android:textSize="12sp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/black" />
+
+                <TextView
+                    android:id="@+id/tvGenresText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Authors"
+                    android:textAlignment="center"
+                    android:textColor="@color/black"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 
-        </RelativeLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
-
-            <!--button for displaying book preview-->
-
-            <!--button for opening buying page of the book-->
-            <Button
-                android:id="@+id/idBtnPreview"
-                android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/tvSuggestionsTitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:layout_weight="1"
-                android:text="Preview"
-                android:textAllCaps="true"
-                tools:ignore="NestedWeights" />
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:padding="4dp"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/idBtnBuy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:layout_weight="1"
-                android:text="Buy"
-                android:textAllCaps="true" />
-
-
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSuggestions"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp" />
         </LinearLayout>
-
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/btnRead"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:textAlignment="center"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"></com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal">
-
-            <TextView
-                android:id="@+id/tvProgress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                app:layout_constraintBottom_toBottomOf="@+id/progressBar"
-                app:layout_constraintEnd_toEndOf="@id/progressBar"
-                app:layout_constraintStart_toStartOf="@id/progressBar"
-                app:layout_constraintTop_toTopOf="@id/progressBar"
-                tools:text="0%" />
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:indeterminateOnly="false"
-                android:progressDrawable="@drawable/book_progress"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:layout_gravity="center_horizontal"
-                tools:progress="0" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-        <TextView
-            android:id="@+id/idTVDescription"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:padding="4dp"
-            android:text="description"
-            android:textColor="@color/black"
-            android:textSize="12sp" />
-
-        <TextView
-            android:id="@+id/idTVpublisher"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:padding="4dp"
-            android:text="Publisher"
-            android:textColor="@color/black"
-            android:textSize="12sp" />
-
-        <LinearLayout
-            android:id="@+id/llTitles"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/idTVPublishDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Published Date"
-                android:textColor="@color/black"
-                android:textSize="12sp"
-                android:textAlignment="center"
-                />
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@color/black" />
-
-            <TextView
-                android:id="@+id/idTVNoOfPages"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Number of pages"
-                android:textColor="@color/black"
-                android:textSize="12sp"
-                android:textAlignment="center" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@color/black"/>
-
-            <TextView
-                android:id="@+id/tvGenres"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Genres"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/llContent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
-            android:layout_weight="1"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/tvPublishDateText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingTop="5dp"
-                android:text="Published Date"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="12sp" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@color/black" />
-
-            <TextView
-                android:id="@+id/tvNoOfPagesText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Number of pages"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="12sp" />
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@color/black" />
-
-            <TextView
-                android:id="@+id/tvGenresText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Authors"
-                android:textAlignment="center"
-                android:textColor="@color/black"
-                android:textSize="12sp" />
-
-        </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</FrameLayout>

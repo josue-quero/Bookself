@@ -6,6 +6,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.library.MyBooksFragment">
 
+    <com.victor.loading.book.BookLoading
+        android:id="@+id/bookloading"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMyBooks"
         android:layout_width="match_parent"

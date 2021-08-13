@@ -111,6 +111,7 @@ public class AddToShelfActivity extends AppCompatActivity {
             }
         } else{
             book = (BooksParse) Parcels.unwrap(getIntent().getParcelableExtra(BooksParse.class.getSimpleName()));
+            bookProgress = new UsersBookProgress();
             isLiked = intent.getBooleanExtra("isLiked", false);
             if (isLiked) {
                 efabAddToLibrary.setVisibility(View.GONE);

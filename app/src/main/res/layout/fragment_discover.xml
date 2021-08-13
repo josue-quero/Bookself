@@ -1,261 +1,323 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    tools:context=".DetailsActivity">
+    tools:context=".DetailsActivity" >
 
-    <LinearLayout
+    <com.victor.loading.book.BookLoading
+        android:id="@+id/bookloading"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"/>
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Just for You"
-        android:textAlignment="center"
-        android:textColor="#000000"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvDiscoverYou"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="0dp"
-        android:paddingTop="10dp"
-        android:clipToPadding="false"
-        android:paddingStart="100dp"
-        android:paddingEnd="100dp">
-
-    </androidx.recyclerview.widget.RecyclerView>
-
-        <TextView
-            android:id="@+id/tvGenres"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Genres"
-            android:textColor="#020202"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="190dp"
-        android:layout_below="@+id/rvDiscoverYou"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="10dp"
-        android:scrollbars="none">
-
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cFiction"
-                android:layout_width="360dp"
-                android:layout_height="150dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp">
 
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/science_background">
+            <TextView
+                android:id="@+id/tvForYou"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Just for You"
+                android:textAlignment="center"
+                android:textColor="#000000"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                </ImageView>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_below="@+id/tvForYou">
 
-                <TextView
-                    android:id="@+id/tvFiction"
+                <RelativeLayout
+                    android:id="@+id/rvWarning"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="FICTION"
-                    android:textColor="#fff"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </com.google.android.material.card.MaterialCardView>
+                    android:layout_centerInParent="true"
+                    android:layout_marginTop="10dp"
+                    android:layout_weight="1">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cDrama"
-                android:layout_width="360dp"
-                android:layout_height="150dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp">
+                    <ImageView
+                        android:id="@+id/imageView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:layout_toEndOf="@+id/tvBooksWarning"
+                        app:srcCompat="@drawable/ic_books" />
 
-                <ImageView
+                    <TextView
+                        android:id="@+id/tvBooksWarning"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="You haven't liked any books"
+                        android:textColor="#000000"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/tvBooksWarning"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_toStartOf="@+id/imageView"
+                        android:text="Try liking a couple of books to get recommendations"
+                        android:textSize="12sp" />
+                </RelativeLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvDiscoverYou"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/drama_background">
-
-                </ImageView>
-
-                <TextView
-                    android:id="@+id/tvDrama"
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="DRAMA"
-                    android:textColor="#fff"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </com.google.android.material.card.MaterialCardView>
+                    android:layout_alignParentStart="true"
+                    android:layout_marginTop="0dp"
+                    android:paddingTop="10dp"
+                    android:clipToPadding="false"
+                    android:paddingStart="100dp"
+                    android:paddingEnd="100dp">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cPoetry"
-                android:layout_width="360dp"
-                android:layout_height="150dp"
+                </androidx.recyclerview.widget.RecyclerView>
+
+            </RelativeLayout>
+
+
+            <TextView
+                android:id="@+id/tvGenres"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp">
+                android:text="Genres"
+                android:textColor="#020202"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/poetry_background">
+            <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="190dp"
+            android:layout_below="@+id/rvDiscoverYou"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="10dp"
+            android:scrollbars="none">
 
-                </ImageView>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvPoetry"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="POETRY"
-                    android:textColor="#fff"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cFiction"
+                    android:layout_width="360dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp">
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cHumor"
-                android:layout_width="360dp"
-                android:layout_height="150dp"
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        app:srcCompat="@drawable/science_background">
+
+                    </ImageView>
+
+                    <TextView
+                        android:id="@+id/tvFiction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="FICTION"
+                        android:textColor="#fff"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cDrama"
+                    android:layout_width="360dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        app:srcCompat="@drawable/drama_background">
+
+                    </ImageView>
+
+                    <TextView
+                        android:id="@+id/tvDrama"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="DRAMA"
+                        android:textColor="#fff"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cPoetry"
+                    android:layout_width="360dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        app:srcCompat="@drawable/poetry_background">
+
+                    </ImageView>
+
+                    <TextView
+                        android:id="@+id/tvPoetry"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="POETRY"
+                        android:textColor="#fff"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cHumor"
+                    android:layout_width="360dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        app:srcCompat="@drawable/humor_background">
+
+                    </ImageView>
+
+                    <TextView
+                        android:id="@+id/tvHumor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="HUMOR"
+                        android:textColor="#fff"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cArt"
+                    android:layout_width="360dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginEnd="10dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        app:srcCompat="@drawable/art_background">
+
+                    </ImageView>
+
+                    <TextView
+                        android:id="@+id/tvArt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="ART"
+                        android:textColor="#fff"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/tvPenguin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp">
-
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/humor_background">
-
-                </ImageView>
-
-                <TextView
-                    android:id="@+id/tvHumor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="HUMOR"
-                    android:textColor="#fff"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cArt"
-                android:layout_width="360dp"
-                android:layout_height="150dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
-                android:layout_marginEnd="10dp">
+                android:layout_weight="1"
+                android:text="Penguin Publisher"
+                android:textColor="#000000"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                <ImageView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/art_background">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDiscoverPenguin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp">
 
-                </ImageView>
+            </androidx.recyclerview.widget.RecyclerView>
 
-                <TextView
-                    android:id="@+id/tvArt"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="ART"
-                    android:textColor="#fff"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-            </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/tvHachette"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:text="Hachette Publisher"
+                android:textColor="#000000"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDiscoverHachette"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp"
+                android:paddingTop="10dp">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+            <TextView
+                android:id="@+id/tvJava"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_weight="1"
+                android:text="Android Development"
+                android:textColor="#000000"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDiscoverJava"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="0dp">
+
+            </androidx.recyclerview.widget.RecyclerView>
 
         </LinearLayout>
-    </HorizontalScrollView>
-
-        <TextView
-            android:id="@+id/tvPenguin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:layout_weight="1"
-            android:text="Penguin Publisher"
-            android:textColor="#000000"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvDiscoverPenguin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="0dp">
-
-        </androidx.recyclerview.widget.RecyclerView>
-
-        <TextView
-            android:id="@+id/tvHachette"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:layout_weight="1"
-            android:text="Hachette Publisher"
-            android:textColor="#000000"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvDiscoverHachette"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
-            android:paddingTop="10dp">
-
-        </androidx.recyclerview.widget.RecyclerView>
-
-        <TextView
-            android:id="@+id/tvJava"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:layout_weight="1"
-            android:text="Android Development"
-            android:textColor="#000000"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvDiscoverJava"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="0dp">
-
-        </androidx.recyclerview.widget.RecyclerView>
-
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</FrameLayout>

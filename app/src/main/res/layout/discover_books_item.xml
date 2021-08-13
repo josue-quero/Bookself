@@ -24,7 +24,6 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="0dp"
         android:padding="3dp"
-        android:text="Book Title"
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="12sp" />

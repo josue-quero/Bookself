@@ -149,10 +149,11 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             tvBookTitle.setText(book.getTitle());
             tvAuthors.setText(String.join(", " , book.getAuthors()));
             tvDate.setText(book.getPublishedDate());
+            Animation fallInAnimation = AnimationUtils.loadAnimation(context, R.anim.fall_down_animation);
+            ivBookImage.clearAnimation();
             String httpLink = book.getThumbnail();
             if (!httpLink.equals("")) {
                 String httpsLink = httpLink.substring(0,4) + "s" + httpLink.substring(4);
-                ivBookImage.clearAnimation();
                 Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -164,13 +165,15 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
                         Log.i("Something", "Last animated: " + lastPosition + "Position: " + position);
                         if (position > lastPosition) {
                             Log.i("Something", "Animated " + position);
-                            Animation fallInAnimation = AnimationUtils.loadAnimation(context, R.anim.fall_down_animation);
                             ivBookImage.setAnimation(fallInAnimation);
                             lastPosition = position;
                         }
                         return false;
                     }
                 }).into(ivBookImage);
+            } else {
+                Glide.with(context).load(R.drawable.book_cover_placeholder).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().into(ivBookImage);
+                ivBookImage.setAnimation(fallInAnimation);
             }
         }
 

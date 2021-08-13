@@ -20,6 +20,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -46,6 +48,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.parse.ParseUser;
+import com.victor.loading.book.BookLoading;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,6 +66,10 @@ public class DiscoverFragment extends Fragment {
     private RequestQueue mRequestQueue;
     private RecyclerView recyclerViewRecommended, recyclerViewPenguin, recyclerViewHachette, recyclerViewJava;
     private MaterialCardView cFiction, cDrama, cPoetry, cHumor, cArt;
+    private RelativeLayout rvWarning;
+    private BookLoading bookLoading;
+    private TextView tvGenre, tvPenguin, tvHachette, tvJava, tvForYou;
+    private int successfulCounter = 0;
     GoogleSignInClient mGoogleSignInClient;
     ArrayList<BooksParse> recommendedBooks, penguinBooks, hachetteBooks, javaBooks;
     DiscoverAdapter discoverAdapter;
@@ -99,6 +106,35 @@ public class DiscoverFragment extends Fragment {
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
 
+        // Getting the card views for the generes part of the discover page
+        cFiction = view.findViewById(R.id.cFiction);
+        cDrama = view.findViewById(R.id.cDrama);
+        cPoetry = view.findViewById(R.id.cPoetry);
+        cHumor = view.findViewById(R.id.cHumor);
+        cArt = view.findViewById(R.id.cArt);
+        rvWarning = view.findViewById(R.id.rvWarning);
+        rvWarning.setVisibility(View.GONE);
+        cFiction.setVisibility(View.GONE);
+        cDrama.setVisibility(View.GONE);
+        cPoetry.setVisibility(View.GONE);
+        cHumor.setVisibility(View.GONE);
+        cArt.setVisibility(View.GONE);
+
+        // Getting the titles of each recyclerview section
+        tvForYou = view.findViewById(R.id.tvForYou);
+        tvGenre = view.findViewById(R.id.tvGenres);
+        tvPenguin = view.findViewById(R.id.tvPenguin);
+        tvHachette = view.findViewById(R.id.tvHachette);
+        tvJava = view.findViewById(R.id.tvJava);
+        tvForYou.setVisibility(View.GONE);
+        tvGenre.setVisibility(View.GONE);
+        tvPenguin.setVisibility(View.GONE);
+        tvHachette.setVisibility(View.GONE);
+        tvJava.setVisibility(View.GONE);
+
+        // Finding and starting the loading icon
+        bookLoading = view.findViewById(R.id.bookloading);
+        bookLoading.start();
         // Finding the recycler views and setting them with a linear layout manager
         recyclerViewRecommended = view.findViewById(R.id.rvDiscoverYou);
         recyclerViewPenguin = view.findViewById(R.id.rvDiscoverPenguin);
@@ -146,13 +182,6 @@ public class DiscoverFragment extends Fragment {
         getOtherBooks("inpublisher:Penguin", "&orderBy=newest", penguinBooks, penguinAdapter);
         getOtherBooks("inpublisher:Hachette%20Book%20Group", "&orderBy=relevance", hachetteBooks, hachetteAdapter);
         getOtherBooks("intitle:Android", "&orderBy=relevance", javaBooks, javaAdapter);
-
-        // Getting the card views for the generes part of the discover page
-        cFiction = view.findViewById(R.id.cFiction);
-        cDrama = view.findViewById(R.id.cDrama);
-        cPoetry = view.findViewById(R.id.cPoetry);
-        cHumor = view.findViewById(R.id.cHumor);
-        cArt = view.findViewById(R.id.cArt);
 
         // Setting on click listeners for the card views
         cFiction.setOnClickListener(new View.OnClickListener() {
@@ -276,12 +305,24 @@ public class DiscoverFragment extends Fragment {
                         // Adding one book to the array list of the books
                         bookList.add(bookInfo);
                     }
-                    // Notifying the adapter that the data changed
-                    adapter.updateAdapter(bookList);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     // displaying a toast message when we get any error from API
                     Log.e(TAG, "Error retrieving data from book", e);
+                }
+                successfulCounter += 1;
+                if (successfulCounter == 4) {
+                    // Notifying all the adapter that the data changed
+                    if (recommendedBooks.isEmpty()) {
+                        rvWarning.setVisibility(View.VISIBLE);
+                    }
+                    bookLoading.setVisibility(View.GONE);
+                    bookLoading.stop();
+                    discoverAdapter.updateAdapter(recommendedBooks);
+                    penguinAdapter.updateAdapter(penguinBooks);
+                    hachetteAdapter.updateAdapter(hachetteBooks);
+                    javaAdapter.updateAdapter(javaBooks);
+                    loadView();
                 }
             }
         }, new Response.ErrorListener() {
@@ -370,12 +411,24 @@ public class DiscoverFragment extends Fragment {
                         // Adding one book to the array list of the books
                         recommendedBooks.add(bookInfo);
                     }
-                    // Notifying the adapter that the data changed
-                    discoverAdapter.updateAdapter(recommendedBooks);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     // Error
                     Log.e(TAG, "No data found: " + e);
+                }
+                successfulCounter += 1;
+                if (successfulCounter == 4) {
+                    // Notifying all the adapter that the data changed
+                    bookLoading.stop();
+                    bookLoading.setVisibility(View.GONE);
+                    if (recommendedBooks.isEmpty()) {
+                        rvWarning.setVisibility(View.VISIBLE);
+                    }
+                    discoverAdapter.updateAdapter(recommendedBooks);
+                    penguinAdapter.updateAdapter(penguinBooks);
+                    hachetteAdapter.updateAdapter(hachetteBooks);
+                    javaAdapter.updateAdapter(javaBooks);
+                    loadView();
                 }
             }
         }, new Response.ErrorListener() {
@@ -399,6 +452,20 @@ public class DiscoverFragment extends Fragment {
         };
         // Adding the JSON object request in the request queue.
         queue.add(booksObjrequest);
+    }
+
+    private void loadView() {
+        cFiction.setVisibility(View.VISIBLE);
+        cDrama.setVisibility(View.VISIBLE);
+        cPoetry.setVisibility(View.VISIBLE);
+        cHumor.setVisibility(View.VISIBLE);
+        cArt.setVisibility(View.VISIBLE);
+        tvForYou.setVisibility(View.VISIBLE);
+        tvGenre.setVisibility(View.VISIBLE);
+        tvPenguin.setVisibility(View.VISIBLE);
+        tvHachette.setVisibility(View.VISIBLE);
+        tvJava.setVisibility(View.VISIBLE);
+        successfulCounter = 0;
     }
 
     // Getting refresh access token to get a new access token

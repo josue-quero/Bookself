@@ -29,6 +29,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.codepath.bookself.models.BooksParse;
+import com.codepath.bookself.models.Shelves;
 import com.codepath.bookself.models.UsersBookProgress;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -37,6 +38,11 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.card.MaterialCardView;
+import com.parse.CountCallback;
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseQuery;
+import com.parse.ParseRelation;
 import com.parse.ParseUser;
 
 import org.json.JSONException;
@@ -45,6 +51,7 @@ import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
@@ -127,7 +134,6 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
                     }
                     materialCardView.setChecked(!materialCardView.isChecked());
                     mActionMode.setTitle("Books selected: " + selectedList.size());
-                    mActionMode.setSubtitle("Indexes: " + selectedList);
                     return true;
                 }
             });
@@ -159,7 +165,6 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
                 }
                 materialCardView.setChecked(!materialCardView.isChecked());
                 mActionMode.setTitle("Books selected: " + selectedList.size());
-                mActionMode.setSubtitle("Indexes: " + selectedList);
             }
         }
 
@@ -173,6 +178,8 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
                 //Log.i("Something", "Link: " + httpsLink);
                 Glide.with(context).load(httpsLink).transform(new RoundedCornersTransformation(30, 10)).into(ivBookImage);
                 //Log.i("Something", "Animation: on");
+            } else {
+                Glide.with(context).load(R.drawable.book_cover_placeholder).transform(new RoundedCornersTransformation(30, 10)).dontAnimate().into(ivBookImage);
             }
         }
 
@@ -210,7 +217,6 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
 
             private void destroySelection() {
                 contextualMode = false;
-                materialCardView.setChecked(!materialCardView.isChecked());
                 for (int i = 0; i < selectedCardViews.size(); i++) {
                     selectedCardViews.get(i).setChecked(false);
                 }
@@ -227,11 +233,63 @@ public class MyBooksAdapter extends RecyclerView.Adapter<MyBooksAdapter.ViewHold
                     bookProgress.deleteInBackground();
                     progressesList.remove(bookProgress);
                 }
-                onDestroyActionMode(mode);
+                getParseShelves();
+                destroySelection();
                 mode.finish();
                 notifyDataSetChanged();
             }
         }
+    }
+
+    // Getting all the shelves that belong to the user
+    private void getParseShelves() {
+        // Specify what type of data we want to query - Shelf.class
+        ParseQuery<Shelves> query = ParseQuery.getQuery(Shelves.class);
+        // Include data referred by user key
+        query.include("progresses.book");
+        query.include("progresses.user");
+        query.include(UsersBookProgress.KEY_BOOK);
+        query.include(UsersBookProgress.KEY_USER);
+        query.include(Shelves.KEY_PROGRESSES);
+        query.include(Shelves.KEY_USER);
+        // Limit query to latest 20 items
+        query.whereEqualTo("user", ParseUser.getCurrentUser());
+        query.setLimit(20);
+        // Order posts by creation date (newest first)
+        query.addAscendingOrder("createdAt");
+        // Start an asynchronous call for posts
+        query.findInBackground(new FindCallback<Shelves>() {
+            @Override
+            public void done(List<Shelves> posts, ParseException e) {
+                // check for errors
+                if (e != null) {
+                    Log.e(TAG, "Issue with getting posts", e);
+                    return;
+                }
+
+                for (Shelves shelf: posts) {
+                    updateCountShelves(shelf);
+                }
+            }
+        });
+    }
+
+    private void updateCountShelves(Shelves shelf) {
+        // save received posts to list and notify adapter of new data
+        ParseRelation<UsersBookProgress> relation = shelf.getRelation("progresses");
+        ParseQuery<UsersBookProgress> query = relation.getQuery();
+
+        query.countInBackground(new CountCallback() {
+            @Override
+            public void done(int count, ParseException e) {
+                if (e != null) {
+                    Log.e("ShelvesAdapter", "Error counting: ", e);
+                    return;
+                }
+                shelf.setAmountBooks(count);
+                shelf.saveInBackground();
+            }
+        });
     }
 
     private void updateGoogleFavorites(String accessToken, BooksParse currentBook, boolean delete) {

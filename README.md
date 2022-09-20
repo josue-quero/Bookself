@@ -142,52 +142,60 @@ Tracks what books an individual has been reading, and recommends them other book
 
 <img src="https://i.imgur.com/mw0gMjV.png" width=300>  
 
-## Schema ### Models
+## Schema 
+### Models
 #### Books
-| Property      | Type     | Description |  
-| ------------- | -------- | ------------| | objectId      | String   | unique id for the user post (default field) |  
-| googleObjectId| String   | API's unique id for the user's book |  
-| bookTitle     | String   | book's title |  
-| authors       | Array of Pointers to Authors| book's authors |  
-| image         | File     | cover picture of book |  
-| publisher     | String   | name of the publisher |  
-| synopsis      | String   | synopsis of the book |  
-| releaseYear   | String   | year the book was originally published |  
-| rating        | Number   | avrg rating of the book |  
-| length        | Number   | amount of pages in the book |  
-| category      | Array of strings | genres the book belongs to |  
-| createdAt     | DateTime | date when book is created (default field) |  
-| updatedAt     | DateTime | date when book is last updated (default field) |
+   | Property      | Type     | Description |
+   | ------------- | -------- | ------------|
+   | objectId      | String   | unique id for the user post (default field) |
+   | googleObjectId| String   | API's unique id for the user's book |
+   | bookTitle     | String   | book's title |
+   | authors       | Array of Pointers to Authors| book's authors |
+   | image         | File     | cover picture of book |
+   | publisher     | String   | name of the publisher |
+   | synopsis      | String   | synopsis of the book |
+   | releaseYear   | String   | year the book was originally published |
+   | rating        | Number   | avrg rating of the book |
+   | lenght        | Number   | amount of pages in the book |
+   | category      | Array of strings | generes the book belongs to |
+   | createdAt     | DateTime | date when book is created (default field) |
+   | updatedAt     | DateTime | date when book is last updated (default field) |
+
 #### Users
 
-| Property      | Type     | Description |  
-| ------------- | -------- | ------------| | objectId      | String   | unique id for the user (default field) |  
-| username      | String   | name of the user |  
-| password     | String   | password of user's account |  
-| userBooks     | Array of JSON Object | user's books |  
-| monthlyBooks  | Number   | amount of books the user wants to read every month |  
-| pagesRead     | Number   | amount of pages the user has read |  
-| booksRead     | Number   | amount of books the user has read |  
-| shelfs        | Array of Pointers to shelfs | user's personalized libraries |  
-| lastreadAt    | DateTime | most recent date the user read |  
-| createdAt     | DateTime | date when book is created (default field) |  
-| updatedAt     | DateTime | date when book is last updated (default field) |
+   | Property      | Type     | Description |
+   | ------------- | -------- | ------------|
+   | objectId      | String   | unique id for the user (default field) |
+   | username      | String   | name of the user |
+   | password     | String   | password of user's account |
+   | userBooks     | Array of JSON Object | user's books |
+   | monthlyBooks  | Number   | amount of books the user wants to read every month |
+   | pagesRead     | Number   | amount of pages the user has read |
+   | booksRead     | Number   | amount of books the user has read |
+   | shelfs        | Array of Pointers to shelfs | user's personalized libraries |
+   | lastreadAt    | DateTime | most recent date the user read |
+   | createdAt     | DateTime | date when book is created (default field) |
+   | updatedAt     | DateTime | date when book is last updated (default field) |
+
 #### Shelfs
 
-| Property      | Type     | Description |  
-| ------------- | -------- | ------------| | objectId      | String   | unique id for the user (default field) |  
-| name          | String   | shelf's name |  
-| createdAt     | DateTime | date when book is created (default field) |  
-| updatedAt     | DateTime | date when book is last updated (default field) |
+   | Property      | Type     | Description |
+   | ------------- | -------- | ------------|
+   | objectId      | String   | unique id for the user (default field) |
+   | name          | String   | shelf's name |
+   | createdAt     | DateTime | date when book is created (default field) |
+   | updatedAt     | DateTime | date when book is last updated (default field) |
+
 ##### User's books
 
 
-| Property      | Type     | Description |  
-| ------------- | -------- | ------------| | book          | Pointer to Book | book object |  
-| favorited     | Boolean  | true if user has favorited this book |  
-| lastPage      | Number   | last page where it was left at |  
-| readAt        | DateTime | most recent date the book was read |  
-| shelfs        | Array of Pointers to Shelfs | shelfs to where this book belongs |
+   | Property      | Type     | Description |
+   | ------------- | -------- | ------------|
+   | book          | Pointer to Book | book object |
+   | favorited     | Boolean  | true if user has favorited this book |
+   | lastPage      | Number   | last page where it was left at |
+   | readAt        | DateTime | most recent date the book was read |
+   | shelfs        | Array of Pointers to Shelfs | shelfs to where this book belongs |
 
 
 ### Networking

@@ -85,7 +85,9 @@ public class LaunchActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.i(TAG, "Starting Launch");
         ParseUser currentUser = ParseUser.getCurrentUser();
+        //Log.i(TAG, currentUser.getUsername());
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         // Check both the Parse and Google current user
         if (account != null && currentUser != null) {
@@ -103,11 +105,13 @@ public class LaunchActivity extends AppCompatActivity {
 
     // When the user has completed the sign in in the Google Server this function is called
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         // If the return call is correct then I handle the SignIn
-        if (requestCode == RC_SIGN_IN && resultCode == RESULT_OK) {
+        Log.i(TAG, "Checking sign in request");
+        Log.i(TAG, String.valueOf(resultCode));
+        if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleSignInResult(task);
         }
@@ -115,6 +119,7 @@ public class LaunchActivity extends AppCompatActivity {
 
     // Getting the authCode from the server response and start the login in Parse
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        Log.i(TAG, "HandlingSignInResult");
         try{
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
             Log.i(TAG, "Sign-in success!");

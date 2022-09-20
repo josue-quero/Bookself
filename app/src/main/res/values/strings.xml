@@ -26,12 +26,12 @@
     <string name="cancel">cancel</string>
     <string name="dialog_fire_missiles">This_Message</string>
     <string name="title_hint">Your shelf title</string>
-    <string name="create">Create</string>
+    <string name="create">Submit</string>
     <string name="new_shelf">Name your shelf</string>
 
-    <string name="clientId">562541520541-2j9aqk39pp8nts5efc2c9dfc3b218kl3.apps.googleusercontent.com</string>
+    <string name="clientId">562541520541-7o2u0i1ogqb01h5bbf1daq7v9c15dvct.apps.googleusercontent.com</string>
     <string name="booksScope">https://www.googleapis.com/auth/books</string>
-    <string name="clientSecret">FlTA8PyCAx43q4XjK3X-wZbC</string>
+    <string name="clientSecret">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</string>
     <string name="tokenServerEncodedUrl">https://oauth2.googleapis.com/token</string>
 
     <item name="fab_action1" type="id" />
